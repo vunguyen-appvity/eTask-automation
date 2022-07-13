@@ -47,6 +47,18 @@ if ($dataConfig) {
     $Result = Invoke-WebRequest @Params -WebSession $session
     $dataProjects = $Result.Content | ConvertFrom-Json
     $myProjects = $dataProjects.value
+    ForEach ($projectDisplayname in $myProjects) {
+        if ($projectDisplayname.source -eq "Appvity.eTask") {
+            $projecteSource = $projectDisplayname.displayName
+        }
+        elseif ($projectDisplayname.source -eq "Microsoft.Vsts") {
+            $projectVSTS = $projectDisplayname.displayName
+
+        }
+        elseif ($projectDisplayname.source -eq "Microsoft.Planner") {
+            $projectPlanner = $projectDisplayname.displayName
+        }
+    }
     
     ## GET STATUS ##
     $UrlStatus = 'https://' + $myDomain.TrimEnd('/') + '/api/status'
@@ -131,8 +143,6 @@ if ($dataConfig) {
     $countResult = 2
     $countupdateID = 2
     $countupdateSource = 2
-    $countName = 2
-    $countPriority = 2
     $countStatus = 2
     $countBody = 2
     $countstartDate = 2
@@ -151,7 +161,7 @@ if ($dataConfig) {
     $countupdatedueDate = 2
     $countupdatePhase = 2
     $countupdateBucket = 2
-
+    $line = 2
     $taskSucces = 0
     $taskError = 0
     $idTask = @{}
@@ -208,6 +218,7 @@ if ($dataConfig) {
         #title
         if ($data.name) {
             if ($data.name.Length -gt 255) {
+                #Title length > 255 characters
                 $flagValid = $true
                 $failMes += 'Field name more than 255 character'
                 $resultSheet.Cells.Item($countName, 3) = $data.name
@@ -221,14 +232,38 @@ if ($dataConfig) {
             }
         }
         else {
+            #Title is left empty
             $flagValid = $true
             $failMes += 'Empty field name'
             $resultSheet.Cells.Item($countName, 3) = "Field data is left empty"
             $resultSheet.Cells.Item($countName, 3).Interior.ColorIndex = 15
             $countName++
         }
-        #
+        ##############################################################################
+        ##############################################################################
+        ##############################################################################
+        ##############################################################################
+        
 
+    
+        if($data.name -and $data.priority -and $data.status) {
+            if(($data.name.Length -le 255) -and ($data.priority -eq "High" -or $data.priority -eq "Normal" -or $data.priority -eq "Low") ) {
+                #create name
+                $dataCreate.Add("name", $data.name)
+                $resultSheet.Cells.Item($line, 3) = $data.name
+                #create priority
+                $dataCreate.Add("priority", $data.priority)
+                $resultSheet.Cells.Item($line, 4) = $data.priority
+                $line++
+            }
+            else {
+                
+            }
+        }
+        ##############################################################################
+        ##############################################################################
+        ##############################################################################
+        ##############################################################################
         # startDate
         if ($data.startDate) {
             $startDate = (Get-Date $data.startDate).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssK")
@@ -257,30 +292,7 @@ if ($dataConfig) {
         }
         # 
 
-        # priority
-        if ($data.priority) {
-            if ($data.priority -eq 'High' -Or $data.priority -eq 'Normal' -Or $data.priority -eq 'Low') {
-                $dataCreate.Add("priority", $data.priority)
-                $resultSheet.Cells.Item($countPriority, 4) = $data.priority
-                $countPriority++
-            }
-            else {
-                    
-                $flagValid = $true
-                $failMes += 'Wrong field priority'
-                $resultSheet.Cells.Item($countPriority, 4) = $data.priority
-                $resultSheet.Cells.Item($countPriority, 4).Interior.ColorIndex = 3
-                $countPriority++   
-            } 
-        }
-        else {
-            $flagValid = $true
-            $failMes += 'Empty field priority'
-            $resultSheet.Cells.Item($countPriority, 4) = "Field data is left empty"
-            $resultSheet.Cells.Item($countPriority, 4).Interior.ColorIndex = 15
-            $countPriority++
-        }
-        #
+        
 
         $dataCreate.Add("complete", 0)
         $dataCreate.Add("attachments", @())
@@ -312,6 +324,9 @@ if ($dataConfig) {
         if ($data.projectName) {
             # $myProjects = Get-exProjects -Domain $myDomain -TeamId $myTeam -ChannelId $myChannel -Cookie $thisCookie
             ForEach ($project in $myProjects) {
+                if ($data.projectName -eq $project.displayName) {
+                    $sourceBucket = $project.source
+                }
                 if ($data.projectName -eq $project.displayName) {            
                     $dataCreate.Add("source", $project.source)
                     $dataCreate.Add("projectId", $project._id)
@@ -368,14 +383,14 @@ if ($dataConfig) {
                                 # if column phase in excel file = phase displayName
                                 if ($data.phase -eq $phase.displayName) {
                                     if ($project.source -eq "Microsoft.Vsts") {
-                                        $dataCreate.Add("phaseName", $data.value)
+                                        $dataCreate.Add("phaseName", $data.phase)
                                         $dataCreate.Add("phase", $phase.value)
                                         $resultSheet.Cells.Item($countPhase, 11) = $data.phase
                                         $countPhase++
                                     }
                                     else {
                                         $dataCreate.Add("phaseName", $data.phase)
-                                        $dataCreate.Add("phase", $phase.id)
+                                        $dataCreate.Add("phase", [string]$phase.value)
                                         $resultSheet.Cells.Item($countPhase, 11) = $data.phase
                                         $countPhase++
                                     }
@@ -410,14 +425,13 @@ if ($dataConfig) {
                 else {
                     $flagValid = $true
                     $failMes += 'Empty field projectName' 
-
                 }
-                    
+                 
             }
         }
+        
         if ($data.bucket) {
-            #-eq 'Appvity.eTask'
-            if ($project.source ) {
+            if ($project.source) {
                 $thisBucket = @()
                 $UrlBucket = 'https://' + $myDomain.TrimEnd('/') + '/api/stories'
                 $Params = @{
@@ -427,22 +441,26 @@ if ($dataConfig) {
                 }
                 $Result = Invoke-WebRequest @Params -WebSession $session
                 $dataBucket = $Result.Content | ConvertFrom-Json
-                    
+
+                
+                
                 $lengthBucket = $dataBucket.value.length
                 ForEach ($bucket in $dataBucket.value) {
-                    if ($data.bucket -eq $bucket.bucketName) {
-                        $thisBucket += $bucket._id
-                        $dataCreate.Add("bucketName", $data.bucket)
-                        $dataCreate.Add("bucket", $thisBucket)
-                        $resultSheet.Cells.Item($countBucket, 12) = $data.bucket
-                        $countBucket++
-                        break
-                    }
-                    $lengthBucket--
-                    if ($lengthBucket -eq 0) {
-                        $resultSheet.Cells.Item($countBucket, 12) = $data.bucket
-                        $resultSheet.Cells.Item($countBucket, 12).Interior.ColorIndex = 3
-                        $countBucket++
+                    if ($sourceBucket -eq $bucket.source) {
+                        if ($data.bucket -eq $bucket.bucketName) {
+                            $thisBucket += $bucket.bucketId
+                            $dataCreate.Add("bucketName", $data.bucket)
+                            $dataCreate.Add("bucket", $thisBucket)
+                            $resultSheet.Cells.Item($countBucket, 12) = $data.bucket
+                            $countBucket++
+                            break
+                        }
+                        $lengthBucket--
+                        if ($lengthBucket -eq 0) {
+                            $resultSheet.Cells.Item($countBucket, 12) = $data.bucket
+                            $resultSheet.Cells.Item($countBucket, 12).Interior.ColorIndex = 3
+                            $countBucket++
+                        }
                     }
                 }
             }
@@ -486,7 +504,7 @@ if ($dataConfig) {
                 $flagValid = $true
                 $failMes += 'Empty field bucket for source Planner' 
             }
-        }
+        }   
 
         if ($data.status) {  
             $lengthStatus = 4;         
@@ -555,7 +573,7 @@ if ($dataConfig) {
         $phaseTask = $createTask.phaseName
         $bucketTask = $createTask.bucketName
         $emailTask = $createTask.assignedTo
-
+        $sourceTask = $createTask.source
 
         #internalID ID column, Result Sheet
         $resultSheet.Cells.Item($countResult, 1) = $createTask.internalId
@@ -571,10 +589,10 @@ if ($dataConfig) {
         else {
             $countupdateID = $countupdateID
         }
+
         #projectName column, Update Sheet
-        if ($createTask.source -eq "Appvity.eTask") {
-            $createTask.source = "eSource"
-            $sourceTask += $createTask.source
+        if ($sourceTask -eq "Appvity.eTask") {
+            $sourceTask = $projecteSource
             if ($sourceTask) {
                 $updatesheet.Cells.Item($countupdateSource, 8) = $sourceTask
                 $updatesheet.Cells.Item($countupdateSource, 8).Interior.ColorIndex = 22
@@ -584,8 +602,31 @@ if ($dataConfig) {
                 $countupdateSource = $countupdateSource
             }
         }
-        if ($createTask.source -eq "Jira") {
-            $sourceTask += $createTask.source
+        if ($sourceTask -eq "Microsoft.Vsts") {
+            $sourceTask = $projectVSTS
+            if ($sourceTask) {
+                $updatesheet.Cells.Item($countupdateSource, 8) = $sourceTask
+                $updatesheet.Cells.Item($countupdateSource, 8).Interior.ColorIndex = 22
+                $countupdateSource++
+            }
+            else {
+                $countupdateSource = $countupdateSource
+            }
+        }
+
+        if ($sourceTask -eq "Microsoft.Planner") {
+            $sourceTask = $projectPlanner
+            if ($sourceTask) {
+                $updatesheet.Cells.Item($countupdateSource, 8) = $sourceTask
+                $updatesheet.Cells.Item($countupdateSource, 8).Interior.ColorIndex = 22
+                $countupdateSource++
+            }
+            else {
+                $countupdateSource = $countupdateSource
+            }
+        }
+
+        if ($sourceTask -eq "Jira") {
             if ($sourceTask) {
                 $updatesheet.Cells.Item($countupdateSource, 8) = $sourceTask
                 $updatesheet.Cells.Item($countupdateSource, 8).Interior.ColorIndex = 22
@@ -657,7 +698,7 @@ if ($dataConfig) {
         }
         
         #priority column, Update Sheet
-        if ($idTask -and !$phaseTask){
+        if ($idTask -and !$phaseTask) {
             $countupdatePhase++
         }
         elseif ($idTask -and $phaseTask) {
@@ -669,7 +710,7 @@ if ($dataConfig) {
         }
 
         #priority column, Update Sheet
-        if ($idTask -and !$bucketTask){
+        if ($idTask -and !$bucketTask) {
             $countupdateBucket++
         }
         if ($bucketTask) {

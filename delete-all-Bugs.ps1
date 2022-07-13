@@ -3,7 +3,7 @@ $channelName = $dataConfig.channelName
 
 Add-Type -AssemblyName PresentationFramework
 
-$msgBoxInput =  [System.Windows.MessageBox]::Show("This action will delete all Tasks in $channelName.`nWould you like to proceed?",'ACTION WARNING !!!','YesNo','Error')
+$msgBoxInput =  [System.Windows.MessageBox]::Show("This action will delete all Bugs in $channelName.`nWould you like to proceed?",'ACTION WARNING !!!','YesNo','Error')
 
   switch  ($msgBoxInput) {
 
@@ -60,39 +60,39 @@ $msgBoxInput =  [System.Windows.MessageBox]::Show("This action will delete all T
             $top = 50
             $skip = 0
             $sumData = 0
-            $DataTasks = @()
+            $DataBugs = @()
           
             do {
                 $queryGetData = '$top='+$top+'&$skip='+$skip
             
-                $urlGetTask = 'https://' + $myDomain.TrimEnd('/') + '/api/tasks?'+ $queryGetData 
+                $urlGetBug = 'https://' + $myDomain.TrimEnd('/') + '/api/bugs?'+ $queryGetData 
                 $Params = @{
-                    Uri     = $urlGetTask
+                    Uri     = $urlGetBug
                     Method  = 'GET'
                     Headers = $hd
                 }
                 $Result = Invoke-WebRequest @Params -WebSession $session
                 $data = $Result.Content | ConvertFrom-Json
                 $sumData = $data.value.count
-                $DataTasks += $data.value
+                $DataBugs += $data.value
                 $skip +=50
     
             } while ($top -eq $sumData)
             
-            ForEach ($task in $DataTasks) {
+            ForEach ($bug in $DataBugs) {
                 
-                $urlDeleteTask = 'https://' + $myDomain.TrimEnd('/') + '/odata/tasks('+$task._id+')'
+                $urlDeleteBug = 'https://' + $myDomain.TrimEnd('/') + '/odata/bugs('+$bug._id+')'
                 $Params = @{
-                    Uri     = $urlDeleteTask
+                    Uri     = $urlDeleteBug
                     Method  = 'DELETE'
                     Headers = $hd
                 }
                 try {
                     $Result = Invoke-WebRequest @Params -WebSession $session
-                    Write-Host "Deleted" $task.name "|" $task._id -ForegroundColor Green
+                    Write-Host "Deleted" $bug.name "|" $bug._id -ForegroundColor Green
                 }
                 catch {
-                    Write-Host "Delete failed"  $task.name "|" $task._id -ForegroundColor Red
+                    Write-Host "Delete failed"  $bug.name "|" $bug._id -ForegroundColor Red
                 }
             }
            
