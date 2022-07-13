@@ -1,7 +1,7 @@
 $dataConfig = Import-Excel -PATH "C:\eTaskAutomationTesting\ImportData.xlsx" -WorksheetName Config 
 $channelName = $dataConfig.channelName
 
-$activityName = "MAPPING PRIORITIES" 
+$activityName = "MAPPING STATUSES" 
 
 Add-Type -AssemblyName PresentationFramework
 
@@ -21,9 +21,11 @@ switch ($msgBoxInput) {
         }
         # $myDomain = "teams-stag.appvity.com"
 
-        $priorityID = @()
+        $statusID = @()
         $eventDeletes = @()
         $sources = @()
+        $bugStatus = @()
+        $taskStatus = @()
 
         if ($dataConfig) {
             $myChannel = $dataConfig.channelId
@@ -50,14 +52,22 @@ switch ($msgBoxInput) {
             $ck.Domain = $myDomain
             $session.Cookies.Add($ck);
             
-            $urlgetPriority = 'https://' + $myDomain.TrimEnd('/') + '/api/priority/' 
+            $urlgetPriority = 'https://' + $myDomain.TrimEnd('/') + '/api/status/' 
             $Params = @{
                 Uri     = $urlgetPriority
                 Method  = 'GET'
                 Headers = $hd
             }
             $Result = Invoke-WebRequest @Params -WebSession $session
-            $myPriority = $Result.Content | ConvertFrom-Json
+            $myStatus = $Result.Content | ConvertFrom-Json
+            foreach($status in $myStatus.value){
+                if($status.type -eq 'Task'){
+                    $taskStatus += $status
+                }
+                else{
+                    $bugStatus += $status
+                }
+            }
             #
             $urlgetSource = 'https://' + $myDomain.TrimEnd('/') + '/api/projects/' + '?t=1657521221074&$count=true&$orderby=source%20asc'
             $Params = @{
@@ -75,16 +85,16 @@ switch ($msgBoxInput) {
             }
 
 
-            Foreach ($priority in $myPriority.value) {
+            Foreach ($statusItem in $taskStatus) {
                 # $priorityID += $priority.map | select -skip 1
-                $priorityID += $priority.map 
+                $statusID += $statusItem.map | select -skip 1
             }
             
 
-            Foreach ($deletepriority in $priorityID) {
-                $urlDeleteEvent = 'https://' + $myDomain.TrimEnd('/') + '/odata/_fieldMappings(' + $deletepriority._id + ')'
+            Foreach ($deleteStatus in $statusID) {
+                $urlDeleteStatusMapping = 'https://' + $myDomain.TrimEnd('/') + '/odata/_fieldMappings(' + $deleteStatus._id + ')'
                 $Params = @{
-                    Uri     = $urlDeleteEvent
+                    Uri     = $urlDeleteStatusMapping
                     Method  = 'DELETE'
                     Headers = $hd
                 }

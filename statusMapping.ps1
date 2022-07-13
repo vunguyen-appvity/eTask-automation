@@ -150,8 +150,8 @@ if ($dataConfig) {
     
     $pathFile = "C:\eTaskAutomationTesting\ImportData.xlsx"
     $Excel = New-Object -ComObject Excel.Application
-    $Excel.Visible = $false
-    $Excel.displayalerts = $False  
+    $Excel.Visible = $true
+    # $Excel.displayalerts = $False  
     $Workbook = $Excel.Workbooks.Open($pathFile, $false, $false)
     $lastsheet = $workbook.Worksheets.Item(7)
     $createSheetResult = $Workbook.worksheets.add([System.Reflection.Missing]::Value, $lastsheet)
@@ -181,8 +181,8 @@ if ($dataConfig) {
         $resultSheet.Cells.Item($countJira, 2) = "VSTS"
         $countJira++
     }
-    Foreach ($priority in $myPriority.value) {
-        $resultSheet.Cells.Item($countPlanner, 3) = $priority.name
+    Foreach ($status in $taskStatus) {
+        $resultSheet.Cells.Item($countPlanner, 3) = $status.name
         $countPlanner++
     }
 
@@ -191,8 +191,8 @@ if ($dataConfig) {
         $resultSheet.Cells.Item($countJira, 1) = $planner.name
         $resultSheet.Cells.Item($countJira, 2) = "Planner"
         $countJira++
-        Foreach ($priority in $myPriority) {
-            $resultSheet.Cells.Item($countPlanner, 3) = $priority.name
+        Foreach ($status in $taskStatus) {
+            $resultSheet.Cells.Item($countPlanner, 3) = $status.name
             $countPlanner++
             break
         }
@@ -222,7 +222,7 @@ if ($dataConfig) {
         }
         while($resultSheet.Cells.Item($countJira, 2).Text -eq $resultSheet.Cells.Item($countJira+1, 2).Text) {
             if($i -le 4) {
-                $resultSheet.Cells.Item($countPlanner, 3) = $myPriority.value[$i].name
+                $resultSheet.Cells.Item($countPlanner, 3) = $taskStatus[$i].name
                 $countJira++
                 $i++
                 $countPlanner++
@@ -233,17 +233,17 @@ if ($dataConfig) {
                 $i++
             }
         }
-        $resultSheet.Cells.Item($countPlanner, 3) = $myPriority.value[$i].name
+        $resultSheet.Cells.Item($countPlanner, 3) = $taskStatus[$i].name
         $countJira++
         $countPlanner++
     }
     $WorkBook.Save()
     $WorkBook.close($true)
-    $objExcel.Quit()
+    $Excel.Quit()
 
 
 
-    $dataExcel = Import-Excel -path "C:\eTaskAutomationTesting\ImportData.xlsx" -WorksheetName priorityMapping 
+    $dataExcel = Import-Excel -path "C:\eTaskAutomationTesting\ImportData.xlsx" -WorksheetName statusMapping 
     $count = 0
     $dataMapping = @()
     
@@ -258,7 +258,7 @@ if ($dataConfig) {
         }
         
         if ($data.eSourceMapping) {
-            Foreach ($priority in $myPriority.value) {
+            Foreach ($priority in $taskStatus) {
                 if ($data.eSourceMapping -eq $priority.name) {
                     $dataCreate.Add("fieldName", $priority.name)
                     $dataCreate.Add("fieldId", $priority._id)
@@ -267,11 +267,11 @@ if ($dataConfig) {
             }
         }
 
-        $dataCreate.Add("type", "priority")
+        $dataCreate.Add("type", "status")
         $dataCreate.Add("entityType", "Task")
         $dataCreate.Add("enable", $true)
         if ($data.sourceMapping -and $data.source -eq "Jira") {
-            Foreach ($jiraPri in $JiraPriority) {
+            Foreach ($jiraPri in $JiraStatus) {
                 if ($data.sourceMapping -eq $jiraPri.name) {
                     $dataCreate.Add("sourceId", $jiraPri.id)
                     $dataCreate.Add("sourceName", $jiraPri.name)
@@ -289,7 +289,7 @@ if ($dataConfig) {
         }
 
         if ($data.sourceMapping -and $data.source -eq "Microsoft.Vsts") {
-            Foreach ($vstsPri in $VSTSPriority) {
+            Foreach ($vstsPri in $VSTSStatus) {
                 if ($data.sourceMapping -eq $vstsPri.name) {
                     $dataCreate.Add("sourceId", $vstsPri.id)
                     $dataCreate.Add("sourceName", $vstsPri.name)
@@ -307,7 +307,7 @@ if ($dataConfig) {
         }
 
         if ($data.sourceMapping -and $data.source -eq "Microsoft.Planner") {
-            Foreach ($plannerPri in $PlannerPriority) {
+            Foreach ($plannerPri in $PlannerStatus) {
                 if ($data.sourceMapping -eq $plannerPri.name) {
                     $dataCreate.Add("sourceId", $plannerPri.id)
                     $dataCreate.Add("sourceName", $plannerPri.name)
@@ -323,15 +323,15 @@ if ($dataConfig) {
             }
         }
         
-        # $urlmappingPriority = 'https://' + $myDomain.TrimEnd('/') + '/odata/_fieldMappings'
-        # $Params = @{
-        #     Uri     = $urlmappingPriority
-        #     Method  = 'POST'
-        #     Headers = $hd
-        #     Body    = $dataCreate | ConvertTo-Json
-        # }
-        # $Result = Invoke-WebRequest @Params -WebSession $session
-        # $Content = $Result.Content | ConvertFrom-Json
-        # $Content
+        $urlmappingStatus = 'https://' + $myDomain.TrimEnd('/') + '/odata/_fieldMappings'
+        $Params = @{
+            Uri     = $urlmappingStatus
+            Method  = 'POST'
+            Headers = $hd
+            Body    = $dataCreate | ConvertTo-Json
+        }
+        $Result = Invoke-WebRequest @Params -WebSession $session
+        $Content = $Result.Content | ConvertFrom-Json
+        $Content
     }
 }

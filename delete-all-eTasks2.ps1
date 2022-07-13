@@ -17,7 +17,7 @@ $msgBoxInput =  [System.Windows.MessageBox]::Show("This action will delete all T
     If (!(Get-module Appvity.eTask.PowerShell)) {
         Import-Module -name 'Appvity.eTask.PowerShell'
     }
-    $myDomain = "teams-stag.appvity.com"
+    # $myDomain = "teams.appvity.com"
     
     $dataExcel = Import-Excel -PATH "C:\eTaskAutomationTesting\ImportData.xlsx" -WorksheetName Config
     
@@ -26,7 +26,7 @@ $msgBoxInput =  [System.Windows.MessageBox]::Show("This action will delete all T
         $groupId = $dataExcel.groupId
         $teamId = $dataExcel.teamId
         $entityId = $dataExcel.entityId
-        # $myDomain = $dataExcel.domainName
+        $myDomain = $dataExcel.domainName
      
         if($channelId -And $groupId -And $teamId -And $entityId){
             $Cookie = ""

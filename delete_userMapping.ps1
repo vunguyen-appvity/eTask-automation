@@ -1,11 +1,11 @@
 $dataConfig = Import-Excel -PATH "C:\eTaskAutomationTesting\ImportData.xlsx" -WorksheetName Config 
 $channelName = $dataConfig.channelName
 
-$activityName = "MOBILE NOTIFICATION" 
+$activityName = "USER MAPPING" 
 
 Add-Type -AssemblyName PresentationFramework
 
-$msgBoxInput = [System.Windows.MessageBox]::Show("This action will delete all $activityName in $channelName.`nWould you like to proceed?", 'ACTION WARNING !!!', 'YesNo', 'Error')
+$msgBoxInput = [System.Windows.MessageBox]::Show("This action will remove all $activityName in $channelName.`nWould you like to proceed?", 'ACTION WARNING !!!', 'YesNo', 'Error')
 
 switch ($msgBoxInput) {
 
@@ -26,6 +26,9 @@ switch ($msgBoxInput) {
         $lengthStatus = @()
         $eventDeletes = @()
         $deleteMapping = @()
+        $userdeleteEmail = @()
+        $userdeleteDisplayname = @()
+        $deleteMappingUserID = @()
         $queryGetEvent = '?t=1656916477108&$count=true&$filter=(entityType%20eq%20%27task%27%20or%20entityType%20eq%20%27bug%27)'
 
         if ($dataConfig) {
@@ -85,31 +88,47 @@ switch ($msgBoxInput) {
             }
             $Result = Invoke-WebRequest @Params -WebSession $session
             $dataEvents = $Result.Content | ConvertFrom-Json
-    
-            
-            ForEach ($event in $EventDeletes) {
-                Foreach ($data in $dataExcel) {
-                    if($data.eTaskDisplayName -eq $event.displayName){
-                        $deleteMapping += $event._id
-                        # $deleteMapping = $deleteMapping | select -Unique
+            ForEach ($user in $dataEvents.value) {
+                ForEach ($data in $dataExcel) {
+                    if ($data.eTaskDisplayName -eq $user.displayName) {
+                        $userdeleteEmail += $user.username
                     }
                 }
             }
-            # if ($event.actionType -eq 'PUSH_NOTIFICATION') {
-            #     $urlDeleteEvent = 'https://' + $myDomain.TrimEnd('/') + '/api/events/' + $event._id + ''
-            #     $Params = @{
-            #         Uri     = $urlDeleteEvent
-            #         Method  = 'DELETE'
-            #         Headers = $hd
-            #     }
-            #     try {
-            #         $Result = Invoke-WebRequest @Params -WebSession $session
-            #         Write-Host "Deleted" $event.eventName "|" $event.internalId -ForegroundColor Green
-            #     }
-            #     catch {
-            #         Write-Host "Delete failed"  $event.eventName "|" $event.internalId -ForegroundColor Red
+            Foreach ($deleteUser in $EventDeletes) {
+                Foreach ($deleteeMail in $userdeleteEmail) {
+                    if ($deleteeMail -eq $deleteUser.user365) {
+                        $deleteMappingUserID += $deleteUser._id
+                        # $deleteMappingUserID = $deleteMappingUserID | select -Unique
+                    }
+                }
+            }
+
+            # ForEach ($event in $EventDeletes) {
+            #     Foreach ($data in $dataExcel) {
+            #         if($data.eTaskDisplayName -eq $event.displayName){
+            #             $deleteMapping += $event._id
+            #             # $deleteMapping = $deleteMapping | select -Unique
+            #         }
             #     }
             # }
+            # if ($event.actionType -eq 'PUSH_NOTIFICATION') {
+            $deleteMappingUserID = $deleteMappingUserID | Select -Unique
+            Foreach ($item in $deleteMappingUserID) {
+                $urlDeleteEvent = 'https://' + $myDomain.TrimEnd('/') + '/odata/_userMappings(' + $item + ')'
+                $Params = @{
+                    Uri     = $urlDeleteEvent
+                    Method  = 'DELETE'
+                    Headers = $hd
+                }
+                try {
+                    $Result = Invoke-WebRequest @Params -WebSession $session
+                    Write-Host "Deleted" $event.eventName "|" $event.internalId -ForegroundColor Green
+                }
+                catch {
+                    Write-Host "Delete failed"  $event.eventName "|" $event.internalId -ForegroundColor Red
+                }
+            }
         }
     }
     'No' {
