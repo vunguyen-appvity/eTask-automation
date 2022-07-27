@@ -115,10 +115,10 @@ if ($dataConfig) {
         }
         
         if($data.schedule -eq 'Daily'){
-            $syncCreate.Add("schedule", @{type = "d"})
-            if($data.dailyTime){
-                $syncCreate.schedule.Add("d", $data.dailyTime)
-            }
+            $syncCreate.Add("schedule", @{type = "d"; d = "00:00"})
+            # if($data.dailyTime){
+            #     $syncCreate.schedule.Add("d", $data.dailyTime)
+            # }
         }
         else{
             $syncCreate.Add("schedule", @{d = "00:00"})
