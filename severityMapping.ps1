@@ -7,9 +7,7 @@ If (!(Get-module Appvity.eTask.PowerShell)) {
     Import-Module -name 'Appvity.eTask.PowerShell'
 }
 
-$taskStatus = @()
-$bugStatus = @()
-$sourceName = @()
+$bugSeverity = @()
 
 $dataConfig = Import-Excel -PATH "C:\eTaskAutomationTesting\ImportData.xlsx" -WorksheetName Config 
 if ($dataConfig) {
@@ -37,22 +35,17 @@ if ($dataConfig) {
     $ck.Domain = $myDomain
     $session.Cookies.Add($ck);
     #
-    $urlgetStatus = 'https://' + $myDomain.TrimEnd('/') + '/api/status/' 
+    $urlgetSeverity = 'https://' + $myDomain.TrimEnd('/') + '/api/severity/' 
     $Params = @{
-        Uri     = $urlgetStatus
+        Uri     = $urlgetSeverity
         Method  = 'GET'
         Headers = $hd
     }
     $Result = Invoke-WebRequest @Params -WebSession $session
-    $myStatus = $Result.Content | ConvertFrom-Json
+    $mySeverity = $Result.Content | ConvertFrom-Json
     
-    foreach($status in $myStatus.value){
-        if($status.type -eq 'Task'){
-            $taskStatus += $status
-        }
-        else{
-            $bugStatus += $status
-        }
+    foreach($severity in $mySeverity.value){
+        $bugSeverity += $severity
     }
     #
     $urlgetSource = 'https://' + $myDomain.TrimEnd('/') + '/api/projects/' + '?t=1657521221074&$count=true&$orderby=source%20asc'
@@ -65,55 +58,35 @@ if ($dataConfig) {
     $mySource = $Result.Content | ConvertFrom-Json
     #
     foreach ($sources in $mySource.value) {
-        if ($sources.source -eq 'Jira') {
-            $urlgetJiraStatus = 'https://' + $myDomain.TrimEnd('/') + '/api/fields/task/status/' + $sources._id
+        # if ($sources.source -eq 'Jira') {
+        #     $urlgetJiraSeverity = 'https://' + $myDomain.TrimEnd('/') + '/api/fields/bug/severity/' + $sources._id
+        #     $Params = @{
+        #         Uri     = $urlgetJiraSeverity
+        #         Method  = 'GET'
+        #         Headers = $hd
+        #     }
+        #     $Result = Invoke-WebRequest @Params -WebSession $session
+        #     $JiraSeverity = $Result.Content | ConvertFrom-Json
+        # }
+        # elseif ($sources.source -eq 'Microsoft.Planner') {
+        #     $urlgetPlannerStatus = 'https://' + $myDomain.TrimEnd('/') + '/api/fields/bug/severity/' + $sources._id
+        #     $Params = @{
+        #         Uri     = $urlgetPlannerStatus
+        #         Method  = 'GET'
+        #         Headers = $hd
+        #     }
+        #     $Result = Invoke-WebRequest @Params -WebSession $session
+        #     $PlannerSeverity = $Result.Content | ConvertFrom-Json
+        # }
+        if ($sources.source -eq 'Microsoft.Vsts') {
+            $urlgetVSTSSeverity = 'https://' + $myDomain.TrimEnd('/') + '/api/fields/bug/severity/' + $sources._id
             $Params = @{
-                Uri     = $urlgetJiraStatus
+                Uri     = $urlgetVSTSSeverity
                 Method  = 'GET'
                 Headers = $hd
             }
             $Result = Invoke-WebRequest @Params -WebSession $session
-            $JiraStatus = $Result.Content | ConvertFrom-Json
-
-            $urlgetJiraBugStatus = 'https://' + $myDomain.TrimEnd('/') + '/api/fields/bug/status/' + $sources._id
-            $Params = @{
-                Uri     = $urlgetJiraBugStatus
-                Method  = 'GET'
-                Headers = $hd
-            }
-            $Result = Invoke-WebRequest @Params -WebSession $session
-            $JiraBugStatus = $Result.Content | ConvertFrom-Json
-        }
-        elseif ($sources.source -eq 'Microsoft.Planner') {
-            $urlgetPlannerStatus = 'https://' + $myDomain.TrimEnd('/') + '/api/fields/task/status/' + $sources._id
-            $Params = @{
-                Uri     = $urlgetPlannerStatus
-                Method  = 'GET'
-                Headers = $hd
-            }
-            $Result = Invoke-WebRequest @Params -WebSession $session
-            $PlannerStatus = $Result.Content | ConvertFrom-Json
-
-            
-        }
-        elseif ($sources.source -eq 'Microsoft.Vsts') {
-            $urlgetVSTSStatus = 'https://' + $myDomain.TrimEnd('/') + '/api/fields/task/status/' + $sources._id
-            $Params = @{
-                Uri     = $urlgetVSTSStatus
-                Method  = 'GET'
-                Headers = $hd
-            }
-            $Result = Invoke-WebRequest @Params -WebSession $session
-            $VSTSStatus = $Result.Content | ConvertFrom-Json
-
-            $urlgetVSTSBugStatus = 'https://' + $myDomain.TrimEnd('/') + '/api/fields/bug/status/' + $sources._id
-            $Params = @{
-                Uri     = $urlgetVSTSBugStatus
-                Method  = 'GET'
-                Headers = $hd
-            }
-            $Result = Invoke-WebRequest @Params -WebSession $session
-            $VSTSBugStatus = $Result.Content | ConvertFrom-Json
+            $VSTSSeverity = $Result.Content | ConvertFrom-Json
         }
     }
 
@@ -128,7 +101,7 @@ if ($dataConfig) {
         #Specify the path to the Excel file and the WorkSheet Name
         $FilePath = "C:\eTaskAutomationTesting\ImportData.xlsx"
         $configSheet = "Config"
-        $statusmappingSheet = "statusMapping"
+        $statusmappingSheet = "severityMapping"
         # $dataimportSheet = "Data-Import"
         
         #Create an Object Excel.Application using Com interface
@@ -177,8 +150,7 @@ if ($dataConfig) {
     $lastsheet = $workbook.Worksheets.Item(7)
     $createSheetResult = $Workbook.worksheets.add([System.Reflection.Missing]::Value, $lastsheet)
     $resultSheet = $workbook.Worksheets.Item(8)
-    $resultSheet.Name = "statusMapping"
-    #Add headers to Sheet "Result"
+    $resultSheet.Name = "severityMapping"
     $resultSheet.Cells.Item(1, 1) = 'sourceMapping'
     $resultSheet.Cells.Item(1, 2) = 'source'
     $resultSheet.Cells.Item(1, 3) = 'eSourceMapping'
@@ -191,33 +163,24 @@ if ($dataConfig) {
     # }
     
 
-    Foreach ($jira in $JiraStatus) {
-        $resultSheet.Cells.Item($countJira, 1) = $jira.name
-        $resultSheet.Cells.Item($countJira, 2) = "Jira"
-        $countJira++   
-    }
+    # Foreach ($jira in $JiraSeverity.value) {
+    #     $resultSheet.Cells.Item($countJira, 1) = $jira.name
+    #     $resultSheet.Cells.Item($countJira, 2) = "Jira"
+    #     $countJira++   
+    # }
 
-    Foreach ($vsts in $VSTSStatus) {
+    Foreach ($vsts in $VSTSSeverity) {
         $resultSheet.Cells.Item($countJira, 1) = $vsts.name
         $resultSheet.Cells.Item($countJira, 2) = "VSTS"
         $countJira++
     }
-    Foreach ($status in $taskStatus) {
+    Foreach ($status in $mySeverity) {
         $resultSheet.Cells.Item($countPlanner, 3) = $status.name
         $countPlanner++
     }
 
 
-    Foreach ($planner in $PlannerStatus) {
-        $resultSheet.Cells.Item($countJira, 1) = $planner.name
-        $resultSheet.Cells.Item($countJira, 2) = "Planner"
-        $countJira++
-        Foreach ($status in $taskStatus) {
-            $resultSheet.Cells.Item($countPlanner, 3) = $status.name
-            $countPlanner++
-            break
-        }
-    }
+   
 
     # $jiraLength = $JiraPriority.Count
     # $temp = $JiraPriority.Count - $myPriority.value.Length
@@ -242,7 +205,7 @@ if ($dataConfig) {
         }
         while($resultSheet.Cells.Item($countJira, 2).Text -eq $resultSheet.Cells.Item($countJira+1, 2).Text) {
             if($i -le 4) {
-                $resultSheet.Cells.Item($countPlanner, 3) = $taskStatus[$i].name
+                $resultSheet.Cells.Item($countPlanner, 3) = $mySeverity.value[$i].name
                 $countJira++
                 $i++
                 $countPlanner++
@@ -253,7 +216,7 @@ if ($dataConfig) {
                 $i++
             }
         }
-        $resultSheet.Cells.Item($countPlanner, 3) = $taskStatus[$i].name
+        $resultSheet.Cells.Item($countPlanner, 3) = $mySeverity.value[$i].name
         $countJira++
         $countPlanner++
     }
@@ -263,7 +226,7 @@ if ($dataConfig) {
 
 
 
-    $dataExcel = Import-Excel -path "C:\eTaskAutomationTesting\ImportData.xlsx" -WorksheetName statusMapping 
+    $dataExcel = Import-Excel -path "C:\eTaskAutomationTesting\ImportData.xlsx" -WorksheetName severityMapping 
     $count = 0
     $dataMapping = @()
     
@@ -273,12 +236,9 @@ if ($dataConfig) {
         if ($data.source -eq "VSTS") {
             $data.source = "Microsoft.Vsts"
         }
-        elseif ($data.source -eq "Planner") {
-            $data.source = "Microsoft.Planner"
-        }
         
         if ($data.eSourceMapping) {
-            Foreach ($priority in $taskStatus) {
+            Foreach ($priority in $mySeverity.value) {
                 if ($data.eSourceMapping -eq $priority.name) {
                     $dataCreate.Add("fieldName", $priority.name)
                     $dataCreate.Add("fieldId", $priority._id)
@@ -287,29 +247,29 @@ if ($dataConfig) {
             }
         }
 
-        $dataCreate.Add("type", "status")
-        $dataCreate.Add("entityType", "Task")
+        $dataCreate.Add("type", "severity")
+        $dataCreate.Add("entityType", "Bug")
         $dataCreate.Add("enable", $true)
-        if ($data.sourceMapping -and $data.source -eq "Jira") {
-            Foreach ($jiraPri in $JiraStatus) {
-                if ($data.sourceMapping -eq $jiraPri.name) {
-                    $dataCreate.Add("sourceId", $jiraPri.id)
-                    $dataCreate.Add("sourceName", $jiraPri.name)
-                    $dataCreate.Add("source", "Jira")
-                    break
-                }
-            }
-            Foreach ($sources in $mySource.value) {
-                if ($data.source -eq $sources.source) {
-                    $dataCreate.Add("projectHostname", $sources.hostname)
-                    $dataCreate.Add("projectId", $sources.id)
-                    break
-                }
-            }
-        }
+        # if ($data.sourceMapping -and $data.source -eq "Jira") {
+        #     Foreach ($jiraPri in $JiraBugStatus) {
+        #         if ($data.sourceMapping -eq $jiraPri.name) {
+        #             $dataCreate.Add("sourceId", $jiraPri.id)
+        #             $dataCreate.Add("sourceName", $jiraPri.name)
+        #             $dataCreate.Add("source", "Jira")
+        #             break
+        #         }
+        #     }
+        #     Foreach ($sources in $mySource.value) {
+        #         if ($data.source -eq $sources.source) {
+        #             $dataCreate.Add("projectHostname", $sources.hostname)
+        #             $dataCreate.Add("projectId", $sources.id)
+        #             break
+        #         }
+        #     }
+        # }
 
         if ($data.sourceMapping -and $data.source -eq "Microsoft.Vsts") {
-            Foreach ($vstsPri in $VSTSStatus) {
+            Foreach ($vstsPri in $VSTSSeverity) {
                 if ($data.sourceMapping -eq $vstsPri.name) {
                     $dataCreate.Add("sourceId", $vstsPri.id)
                     $dataCreate.Add("sourceName", $vstsPri.name)
@@ -326,26 +286,26 @@ if ($dataConfig) {
             }
         }
 
-        if ($data.sourceMapping -and $data.source -eq "Microsoft.Planner") {
-            Foreach ($plannerPri in $PlannerStatus) {
-                if ($data.sourceMapping -eq $plannerPri.name) {
-                    $dataCreate.Add("sourceId", $plannerPri.id)
-                    $dataCreate.Add("sourceName", $plannerPri.name)
-                    $dataCreate.Add("source", "Microsoft.Planner")
-                    break
-                }
-            }
-            Foreach ($sources in $mySource.value) {
-                if ($data.source -eq $sources.source) {
-                    $dataCreate.Add("projectId", $sources.id)
-                    break
-                }
-            }
-        }
+        # if ($data.sourceMapping -and $data.source -eq "Microsoft.Planner") {
+        #     Foreach ($plannerPri in $PlannerStatus) {
+        #         if ($data.sourceMapping -eq $plannerPri.name) {
+        #             $dataCreate.Add("sourceId", $plannerPri.id)
+        #             $dataCreate.Add("sourceName", $plannerPri.name)
+        #             $dataCreate.Add("source", "Microsoft.Planner")
+        #             break
+        #         }
+        #     }
+        #     Foreach ($sources in $mySource.value) {
+        #         if ($data.source -eq $sources.source) {
+        #             $dataCreate.Add("projectId", $sources.id)
+        #             break
+        #         }
+        #     }
+        # }
         
-        $urlmappingStatus = 'https://' + $myDomain.TrimEnd('/') + '/odata/_fieldMappings'
+        $urlmappingSeverity = 'https://' + $myDomain.TrimEnd('/') + '/odata/_fieldMappings'
         $Params = @{
-            Uri     = $urlmappingStatus
+            Uri     = $urlmappingSeverity
             Method  = 'POST'
             Headers = $hd
             Body    = $dataCreate | ConvertTo-Json

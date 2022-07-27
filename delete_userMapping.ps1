@@ -21,7 +21,7 @@ switch ($msgBoxInput) {
         }
         # $myDomain = "teams-stag.appvity.com"
 
-        $dataExcel = Import-Excel -path "C:\eTaskAutomationTesting\Settings.xlsx" -WorksheetName userMapping
+        $dataExcel = Import-Excel -path "C:\eTaskAutomationTesting\ImportData.xlsx" -WorksheetName userMapping
         $top = 100
         $lengthStatus = @()
         $eventDeletes = @()
@@ -114,6 +114,7 @@ switch ($msgBoxInput) {
             # }
             # if ($event.actionType -eq 'PUSH_NOTIFICATION') {
             $deleteMappingUserID = $deleteMappingUserID | Select -Unique
+            
             Foreach ($item in $deleteMappingUserID) {
                 $urlDeleteEvent = 'https://' + $myDomain.TrimEnd('/') + '/odata/_userMappings(' + $item + ')'
                 $Params = @{
@@ -123,10 +124,12 @@ switch ($msgBoxInput) {
                 }
                 try {
                     $Result = Invoke-WebRequest @Params -WebSession $session
-                    Write-Host "Deleted" $event.eventName "|" $event.internalId -ForegroundColor Green
+                    Write-Host "Removed user mapping sucessfully"  -ForegroundColor Green
+                        
                 }
                 catch {
-                    Write-Host "Delete failed"  $event.eventName "|" $event.internalId -ForegroundColor Red
+                    Write-Host "Failed to remove user mapping" -ForegroundColor Red
+                        
                 }
             }
         }

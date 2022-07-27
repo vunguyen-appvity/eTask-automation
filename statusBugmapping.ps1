@@ -128,7 +128,7 @@ if ($dataConfig) {
         #Specify the path to the Excel file and the WorkSheet Name
         $FilePath = "C:\eTaskAutomationTesting\ImportData.xlsx"
         $configSheet = "Config"
-        $statusmappingSheet = "statusMapping"
+        $statusmappingSheet = "statusBugMapping"
         # $dataimportSheet = "Data-Import"
         
         #Create an Object Excel.Application using Com interface
@@ -170,14 +170,13 @@ if ($dataConfig) {
     
     $pathFile = "C:\eTaskAutomationTesting\ImportData.xlsx"
     $Excel = New-Object -ComObject Excel.Application
-    $Excel.Visible = $false
-    $Excel.displayalerts = $False  
+    $Excel.Visible = $true
     # $Excel.displayalerts = $False  
     $Workbook = $Excel.Workbooks.Open($pathFile, $false, $false)
     $lastsheet = $workbook.Worksheets.Item(7)
     $createSheetResult = $Workbook.worksheets.add([System.Reflection.Missing]::Value, $lastsheet)
     $resultSheet = $workbook.Worksheets.Item(8)
-    $resultSheet.Name = "statusMapping"
+    $resultSheet.Name = "statusBugMapping"
     #Add headers to Sheet "Result"
     $resultSheet.Cells.Item(1, 1) = 'sourceMapping'
     $resultSheet.Cells.Item(1, 2) = 'source'
@@ -191,33 +190,24 @@ if ($dataConfig) {
     # }
     
 
-    Foreach ($jira in $JiraStatus) {
+    Foreach ($jira in $JiraBugStatus) {
         $resultSheet.Cells.Item($countJira, 1) = $jira.name
         $resultSheet.Cells.Item($countJira, 2) = "Jira"
         $countJira++   
     }
 
-    Foreach ($vsts in $VSTSStatus) {
+    Foreach ($vsts in $VSTSBugStatus) {
         $resultSheet.Cells.Item($countJira, 1) = $vsts.name
         $resultSheet.Cells.Item($countJira, 2) = "VSTS"
         $countJira++
     }
-    Foreach ($status in $taskStatus) {
+    Foreach ($status in $bugStatus) {
         $resultSheet.Cells.Item($countPlanner, 3) = $status.name
         $countPlanner++
     }
 
 
-    Foreach ($planner in $PlannerStatus) {
-        $resultSheet.Cells.Item($countJira, 1) = $planner.name
-        $resultSheet.Cells.Item($countJira, 2) = "Planner"
-        $countJira++
-        Foreach ($status in $taskStatus) {
-            $resultSheet.Cells.Item($countPlanner, 3) = $status.name
-            $countPlanner++
-            break
-        }
-    }
+   
 
     # $jiraLength = $JiraPriority.Count
     # $temp = $JiraPriority.Count - $myPriority.value.Length
@@ -242,7 +232,7 @@ if ($dataConfig) {
         }
         while($resultSheet.Cells.Item($countJira, 2).Text -eq $resultSheet.Cells.Item($countJira+1, 2).Text) {
             if($i -le 4) {
-                $resultSheet.Cells.Item($countPlanner, 3) = $taskStatus[$i].name
+                $resultSheet.Cells.Item($countPlanner, 3) = $bugStatus[$i].name
                 $countJira++
                 $i++
                 $countPlanner++
@@ -253,7 +243,7 @@ if ($dataConfig) {
                 $i++
             }
         }
-        $resultSheet.Cells.Item($countPlanner, 3) = $taskStatus[$i].name
+        $resultSheet.Cells.Item($countPlanner, 3) = $bugStatus[$i].name
         $countJira++
         $countPlanner++
     }
@@ -263,7 +253,7 @@ if ($dataConfig) {
 
 
 
-    $dataExcel = Import-Excel -path "C:\eTaskAutomationTesting\ImportData.xlsx" -WorksheetName statusMapping 
+    $dataExcel = Import-Excel -path "C:\eTaskAutomationTesting\ImportData.xlsx" -WorksheetName statusBugMapping 
     $count = 0
     $dataMapping = @()
     
@@ -278,7 +268,7 @@ if ($dataConfig) {
         }
         
         if ($data.eSourceMapping) {
-            Foreach ($priority in $taskStatus) {
+            Foreach ($priority in $bugStatus) {
                 if ($data.eSourceMapping -eq $priority.name) {
                     $dataCreate.Add("fieldName", $priority.name)
                     $dataCreate.Add("fieldId", $priority._id)
@@ -288,10 +278,10 @@ if ($dataConfig) {
         }
 
         $dataCreate.Add("type", "status")
-        $dataCreate.Add("entityType", "Task")
+        $dataCreate.Add("entityType", "Bug")
         $dataCreate.Add("enable", $true)
         if ($data.sourceMapping -and $data.source -eq "Jira") {
-            Foreach ($jiraPri in $JiraStatus) {
+            Foreach ($jiraPri in $JiraBugStatus) {
                 if ($data.sourceMapping -eq $jiraPri.name) {
                     $dataCreate.Add("sourceId", $jiraPri.id)
                     $dataCreate.Add("sourceName", $jiraPri.name)
@@ -309,7 +299,7 @@ if ($dataConfig) {
         }
 
         if ($data.sourceMapping -and $data.source -eq "Microsoft.Vsts") {
-            Foreach ($vstsPri in $VSTSStatus) {
+            Foreach ($vstsPri in $VSTSBugStatus) {
                 if ($data.sourceMapping -eq $vstsPri.name) {
                     $dataCreate.Add("sourceId", $vstsPri.id)
                     $dataCreate.Add("sourceName", $vstsPri.name)

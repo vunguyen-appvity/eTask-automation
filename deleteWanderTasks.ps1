@@ -65,7 +65,7 @@ $msgBoxInput =  [System.Windows.MessageBox]::Show("This action will delete all T
             do {
                 $queryGetData = '$top='+$top+'&$skip='+$skip
             
-                $urlGetTask = 'https://' + $myDomain.TrimEnd('/') + '/api/tasks?'+ $queryGetData 
+                $urlGetTask = 'https://' + $myDomain.TrimEnd('/') + '/api/tasks/wanderer?'+ $queryGetData  
                 $Params = @{
                     Uri     = $urlGetTask
                     Method  = 'GET'

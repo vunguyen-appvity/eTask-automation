@@ -90,10 +90,10 @@ switch ($msgBoxInput) {
                 }
                 try {
                     $Result = Invoke-WebRequest @Params -WebSession $session
-                    Write-Host "Deleted" $deletepriority.eventName "|" $event.internalId -ForegroundColor Green
+                    Write-Host "Removed all priorities mapping sucessfully" -ForegroundColor Green
                 }
                 catch {
-                    Write-Host "Delete failed"  $event.eventName "|" $event.internalId -ForegroundColor Red
+                    Write-Host "Failed to remove priorities mapping" -ForegroundColor Red
                 }
             }
         }

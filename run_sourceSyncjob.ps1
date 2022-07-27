@@ -1,16 +1,16 @@
 $dataConfig = Import-Excel -PATH "C:\eTaskAutomationTesting\ImportData.xlsx" -WorksheetName Config 
 $channelName = $dataConfig.channelName
 
-$activityName = "MAPPING STATUSES" 
+$activityName = "JOB SYNCS" 
+
 
 Add-Type -AssemblyName PresentationFramework
 
-$msgBoxInput = [System.Windows.MessageBox]::Show("This action will remove all $activityName in $channelName.`nWould you like to proceed?", 'ACTION WARNING !!!', 'YesNo', 'Error')
+$msgBoxInput = [System.Windows.MessageBox]::Show("This action will run all $activityName in $channelName.`nWould you like to proceed?", 'ACTION WARNING !!!', 'YesNo', 'Error')
 
 switch ($msgBoxInput) {
 
     'Yes' {
-
         [void] [System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") 
 
         If (!(Get-module Appvity.eTask.Common.PowerShell)) {
@@ -21,11 +21,10 @@ switch ($msgBoxInput) {
         }
         # $myDomain = "teams-stag.appvity.com"
 
-        $statusID = @()
+        $priorityID = @()
         $eventDeletes = @()
         $sources = @()
-        $bugStatus = @()
-        $taskStatus = @()
+        $syncID = @()
 
         if ($dataConfig) {
             $myChannel = $dataConfig.channelId
@@ -51,59 +50,58 @@ switch ($msgBoxInput) {
             $ck.Path = "/"
             $ck.Domain = $myDomain
             $session.Cookies.Add($ck);
-            
-            $urlgetPriority = 'https://' + $myDomain.TrimEnd('/') + '/api/status/' 
+
+            $urlgetSyncVSTS = 'https://' + $myDomain.TrimEnd('/') + '/api/syncs/' + '?t=1657854269804&$count=true&$filter=source%20eq%20%27Microsoft.Vsts%27'
             $Params = @{
-                Uri     = $urlgetPriority
+                Uri     = $urlgetSyncVSTS
                 Method  = 'GET'
                 Headers = $hd
             }
             $Result = Invoke-WebRequest @Params -WebSession $session
-            $myStatus = $Result.Content | ConvertFrom-Json
-            foreach($status in $myStatus.value){
-                if($status.type -eq 'Task'){
-                    $taskStatus += $status
-                }
-                else{
-                    $bugStatus += $status
-                }
+            $myVSTSSync = $Result.Content | ConvertFrom-Json
+            Foreach ($VSTSSync in $myVSTSSync.value) {
+                $syncID += $VSTSSync._id
             }
             #
-            $urlgetSource = 'https://' + $myDomain.TrimEnd('/') + '/api/projects/' + '?t=1657521221074&$count=true&$orderby=source%20asc'
+            $urlgetSyncJira = 'https://' + $myDomain.TrimEnd('/') + '/api/syncs/' + '?t=1657856047102&$count=true&$filter=source%20eq%20%27Jira%27'
             $Params = @{
-                Uri     = $urlgetSource
+                Uri     = $urlgetSyncJira
                 Method  = 'GET'
                 Headers = $hd
             }
             $Result = Invoke-WebRequest @Params -WebSession $session
-            $mySource = $Result.Content | ConvertFrom-Json
-
-            Foreach ($source in $mySource.value) {
-                if ($source.source -ne "Appvity.eTask") {
-                    $sources += $source.id
-                }
+            $myJiraSync = $Result.Content | ConvertFrom-Json
+            Foreach ($JiraSync in $myJiraSync.value) {
+                $syncID += $JiraSync._id
+            }
+            #
+            $urlgetSyncPlanner = 'https://' + $myDomain.TrimEnd('/') + '/api/syncs/' + '?t=1657856134486&$count=true&$filter=source%20eq%20%27Microsoft.Planner%27'
+            $Params = @{
+                Uri     = $urlgetSyncPlanner
+                Method  = 'GET'
+                Headers = $hd
+            }
+            $Result = Invoke-WebRequest @Params -WebSession $session
+            $myPlannerSync = $Result.Content | ConvertFrom-Json
+            Foreach ($PlannerSync in $myPlannerSync.value) {
+                $syncID += $PlannerSync._id
             }
 
-
-            Foreach ($statusItem in $taskStatus) {
-                # $priorityID += $priority.map | select -skip 1
-                $statusID += $statusItem.map | select -skip 1
-            }
-            
-
-            Foreach ($deleteStatus in $statusID) {
-                $urlDeleteStatusMapping = 'https://' + $myDomain.TrimEnd('/') + '/odata/_fieldMappings(' + $deleteStatus._id + ')'
+            foreach ($syncIDrun in $syncID) {
+                $urlrunSync = 'https://' + $myDomain.TrimEnd('/') + '/api/syncs/' + $syncIDrun + '/run'
                 $Params = @{
-                    Uri     = $urlDeleteStatusMapping
-                    Method  = 'DELETE'
+                    Uri     = $urlrunSync
+                    Method  = 'POST'
                     Headers = $hd
+                    Body    = $sourceCreate | ConvertTo-Json
                 }
                 try {
                     $Result = Invoke-WebRequest @Params -WebSession $session
-                    Write-Host "Removed all tasks mapping sucessfully" -ForegroundColor Green
+                    $createSource = $Result.Content | ConvertFrom-Json
+                    Write-Host "Run sync jobs successfully" -ForegroundColor Green
                 }
                 catch {
-                    Write-Host "Failed to remove tasks mapping"  $event.eventName "|" $event.internalId -ForegroundColor Red
+                    Write-Host "Sync now rate limit. Try again in 2 minutes." -ForegroundColor Red
                 }
             }
         }
@@ -113,4 +111,5 @@ switch ($msgBoxInput) {
         return
   
     }
+  
 }

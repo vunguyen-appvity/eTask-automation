@@ -39,13 +39,13 @@ if ($dataConfig) {
     $VSTSSource = @{
         hostname = "https://appvity.visualstudio.com"
         source   = "Microsoft.Vsts"
-        token    = "pykzkdbo6md5bzpz2zjdfyyaporjexkmx6rm3nbzqbbl6k4btx5a"
+        token    = "xq6bjmnhborftmlojjc4wh4x5weturdw6c6fwdzvhxainbymbbva"
     }
     $JiraSource = @{
         hostname = "appvity.atlassian.net"
-        password = "p9yLpfemRKa1EP72a1hP2286"
+        password = "vyjz52pExYf1C1rkfwxB7A7C"
         source   = "Jira"
-        username = "truc.t.bui@appvity.com"
+        username = "chau.vo@appvity.com"
     }
     # GET VSTS SOURCE
     $UrlgetSource = 'https://' + $myDomain.TrimEnd('/') + '/api/_configs/project'
@@ -120,7 +120,7 @@ if ($dataConfig) {
             }
             elseif ($data.source -eq "Microsoft.Vsts") {
                 $sourceCreate.Add("hostname", "https://appvity.visualstudio.com")
-                $sourceCreate.Add("token", "pykzkdbo6md5bzpz2zjdfyyaporjexkmx6rm3nbzqbbl6k4btx5a")
+                $sourceCreate.Add("token", "xq6bjmnhborftmlojjc4wh4x5weturdw6c6fwdzvhxainbymbbva")
                 Foreach ($VSTSitem in $VSTS) {
                     if ($VSTSitem.name -eq $data.sourceName) {
                         $sourceCreate.Add("projectId", $VSTSitem.id)
@@ -132,8 +132,8 @@ if ($dataConfig) {
             }
             elseif ($data.source -eq "Jira") {
                 $sourceCreate.Add("hostname", "appvity.atlassian.net")
-                $sourceCreate.Add("username", "truc.t.bui@appvity.com")
-                $sourceCreate.Add("password", "p9yLpfemRKa1EP72a1hP2286")
+                $sourceCreate.Add("username", "chau.vo@appvity.com")
+                $sourceCreate.Add("password", "vyjz52pExYf1C1rkfwxB7A7C")
                 Foreach ($Jiraitem in $Jira) {
                     if ($Jiraitem.name -eq $data.sourceName) {
                         $sourceCreate.Add("projectId", $Jiraitem.id)

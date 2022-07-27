@@ -231,7 +231,7 @@ if ($dataConfig) {
                 $resultSheet.Cells.Item($countWhen, 5) = $data.When
                 $countWhen++
             }
-            elseif ($data.when -eq 'A task is update' -or $data.when -eq 'A bug is update') {
+            elseif ($data.when -eq 'A task is updated' -or $data.when -eq 'A bug is updated') {
                 $dataActivity.Add("triggerType", "ITEM_UPDATED")
                 $resultSheet.Cells.Item($countWhen, 5) = $data.When
                 $countWhen++

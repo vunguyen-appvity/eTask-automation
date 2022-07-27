@@ -1,7 +1,7 @@
 $dataConfig = Import-Excel -PATH "C:\eTaskAutomationTesting\ImportData.xlsx" -WorksheetName Config 
 $channelName = $dataConfig.channelName
 
-$activityName = "MAPPING STATUSES" 
+$activityName = "BUG MAPPING STATUSES" 
 
 Add-Type -AssemblyName PresentationFramework
 
@@ -85,9 +85,9 @@ switch ($msgBoxInput) {
             }
 
 
-            Foreach ($statusItem in $taskStatus) {
+            Foreach ($statusItem in $bugStatus) {
                 # $priorityID += $priority.map | select -skip 1
-                $statusID += $statusItem.map | select -skip 1
+                $statusID += $statusItem.map 
             }
             
 
@@ -100,10 +100,10 @@ switch ($msgBoxInput) {
                 }
                 try {
                     $Result = Invoke-WebRequest @Params -WebSession $session
-                    Write-Host "Removed all tasks mapping sucessfully" -ForegroundColor Green
+                    Write-Host "Removed all bug statuses mapping sucessfully" -ForegroundColor Green
                 }
                 catch {
-                    Write-Host "Failed to remove tasks mapping"  $event.eventName "|" $event.internalId -ForegroundColor Red
+                    Write-Host "Failed to remove bug statuses mapping" -ForegroundColor Red
                 }
             }
         }

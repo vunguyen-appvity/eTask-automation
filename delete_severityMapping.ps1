@@ -1,7 +1,7 @@
 $dataConfig = Import-Excel -PATH "C:\eTaskAutomationTesting\ImportData.xlsx" -WorksheetName Config 
 $channelName = $dataConfig.channelName
 
-$activityName = "MAPPING STATUSES" 
+$activityName = "SEVERITY" 
 
 Add-Type -AssemblyName PresentationFramework
 
@@ -52,22 +52,15 @@ switch ($msgBoxInput) {
             $ck.Domain = $myDomain
             $session.Cookies.Add($ck);
             
-            $urlgetPriority = 'https://' + $myDomain.TrimEnd('/') + '/api/status/' 
+            $urlgetSeverity = 'https://' + $myDomain.TrimEnd('/') + '/api/severity/' 
             $Params = @{
-                Uri     = $urlgetPriority
+                Uri     = $urlgetSeverity
                 Method  = 'GET'
                 Headers = $hd
             }
             $Result = Invoke-WebRequest @Params -WebSession $session
-            $myStatus = $Result.Content | ConvertFrom-Json
-            foreach($status in $myStatus.value){
-                if($status.type -eq 'Task'){
-                    $taskStatus += $status
-                }
-                else{
-                    $bugStatus += $status
-                }
-            }
+            $mySeverity = $Result.Content | ConvertFrom-Json
+
             #
             $urlgetSource = 'https://' + $myDomain.TrimEnd('/') + '/api/projects/' + '?t=1657521221074&$count=true&$orderby=source%20asc'
             $Params = @{
@@ -85,9 +78,9 @@ switch ($msgBoxInput) {
             }
 
 
-            Foreach ($statusItem in $taskStatus) {
+            Foreach ($statusItem in $mySeverity.value) {
                 # $priorityID += $priority.map | select -skip 1
-                $statusID += $statusItem.map | select -skip 1
+                $statusID += $statusItem.map 
             }
             
 
@@ -100,10 +93,10 @@ switch ($msgBoxInput) {
                 }
                 try {
                     $Result = Invoke-WebRequest @Params -WebSession $session
-                    Write-Host "Removed all tasks mapping sucessfully" -ForegroundColor Green
+                    Write-Host "Removed all severities mapping sucessfully" -ForegroundColor Green
                 }
                 catch {
-                    Write-Host "Failed to remove tasks mapping"  $event.eventName "|" $event.internalId -ForegroundColor Red
+                    Write-Host "Failed to remove severities mapping" -ForegroundColor Red
                 }
             }
         }
