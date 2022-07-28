@@ -36,6 +36,9 @@ if ($dataConfig) {
     $ck.Domain = $myDomain
     $session.Cookies.Add($ck);
 
+    $Succeed = 0
+    $Failed = 0
+
     $VSTSSource = @{
         hostname = "https://appvity.visualstudio.com"
         source   = "Microsoft.Vsts"
@@ -43,7 +46,7 @@ if ($dataConfig) {
     }
     $JiraSource = @{
         hostname = "appvity.atlassian.net"
-        password = "vyjz52pExYf1C1rkfwxB7A7C"
+        password = "5PUsjRpA204yTcHHPODoAFCA"
         source   = "Jira"
         username = "chau.vo@appvity.com"
     }
@@ -133,7 +136,7 @@ if ($dataConfig) {
             elseif ($data.source -eq "Jira") {
                 $sourceCreate.Add("hostname", "appvity.atlassian.net")
                 $sourceCreate.Add("username", "chau.vo@appvity.com")
-                $sourceCreate.Add("password", "vyjz52pExYf1C1rkfwxB7A7C")
+                $sourceCreate.Add("password", "5PUsjRpA204yTcHHPODoAFCA")
                 Foreach ($Jiraitem in $Jira) {
                     if ($Jiraitem.name -eq $data.sourceName) {
                         $sourceCreate.Add("projectId", $Jiraitem.id)
@@ -151,8 +154,21 @@ if ($dataConfig) {
             Headers = $hd
             Body    = $sourceCreate | ConvertTo-Json
         }
-        $Result = Invoke-WebRequest @Params -WebSession $session
-        $createSource = $Result.Content | ConvertFrom-Json
-        $createSource
+        # $Result = Invoke-WebRequest @Params -WebSession $session
+        # $createSource = $Result.Content | ConvertFrom-Json
+        # $createSource
+        try {
+            $Result = Invoke-WebRequest @Params -WebSession $session
+            $createSource = $Result.Content | ConvertFrom-Json
+            Write-Host "Source created successfully" -ForegroundColor Green
+            $Succeed++
+        }
+        catch {
+            Write-Error $_.Exception.Message
+            $Failed++
+        }
     }
+    Write-Host "Successful sources: $Succeed" -ForegroundColor Green
+    Write-Host "Failed sources: $Failed" -ForegroundColor Red
+
 }

@@ -17,8 +17,9 @@ $msgBoxInput =  [System.Windows.MessageBox]::Show("This action will delete all B
     If (!(Get-module Appvity.eTask.PowerShell)) {
         Import-Module -name 'Appvity.eTask.PowerShell'
     }
-    $myDomain = "teams-stag.appvity.com"
-    
+    # $myDomain = "teams-stag.appvity.com"
+    $Succeed = 0
+    $Failed = 0
     $dataExcel = Import-Excel -PATH "C:\eTaskAutomationTesting\ImportData.xlsx" -WorksheetName Config
     
     if($dataExcel){
@@ -90,14 +91,19 @@ $msgBoxInput =  [System.Windows.MessageBox]::Show("This action will delete all B
                 try {
                     $Result = Invoke-WebRequest @Params -WebSession $session
                     Write-Host "Deleted" $bug.name "|" $bug._id -ForegroundColor Green
+                    $Succeed++
                 }
                 catch {
                     Write-Host "Delete failed"  $bug.name "|" $bug._id -ForegroundColor Red
+                    $Failed++
                 }
             }
            
         }
     }    
+    Write-Host "Total bugs have been deleted: $Succeed" -ForegroundColor Green
+    Write-Host "Total bugs have been failed to delte: $Failed" -ForegroundColor Red
+
   }
 
   'No' {

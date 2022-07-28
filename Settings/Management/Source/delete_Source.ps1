@@ -45,6 +45,9 @@ switch ($msgBoxInput) {
             $ck.Domain = $myDomain
             $session.Cookies.Add($ck);
 
+            $Succeed = 0
+            $Failed = 0
+
             $urlgetSource = 'https://' + $myDomain.TrimEnd('/') + '/api/projects/' + '?t=1657269683259&$count=true&$orderby=source%20asc'
             $Params = @{
                 Uri     = $urlgetSource
@@ -67,12 +70,17 @@ switch ($msgBoxInput) {
                     try {
                         $Result = Invoke-WebRequest @Params -WebSession $session
                         Write-Host "Deleted" $source.displayName "|" $source._id -ForegroundColor Green
+                        $Succeed++
                     }
                     catch {
                         Write-Host "Delete failed"  $source.displayName "|" $source._id -ForegroundColor Red
+                        $Failed++
                     }
                 }
             }
+            Write-Host "Total sources have been deleted: $Succeed" -ForegroundColor Green
+            Write-Host "Total sources have been failed to delete: $Failed" -ForegroundColor Red
+        
         }
     }
     'No' {

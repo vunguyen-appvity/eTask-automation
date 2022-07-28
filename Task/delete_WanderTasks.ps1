@@ -20,7 +20,9 @@ $msgBoxInput =  [System.Windows.MessageBox]::Show("This action will delete all T
     # $myDomain = "teams.appvity.com"
     
     $dataExcel = Import-Excel -PATH "C:\eTaskAutomationTesting\ImportData.xlsx" -WorksheetName Config
-    
+    $Succeed = 0
+    $Failed = 0
+
     if($dataExcel){
         $channelId = $dataExcel.channelId
         $groupId = $dataExcel.groupId
@@ -65,7 +67,7 @@ $msgBoxInput =  [System.Windows.MessageBox]::Show("This action will delete all T
             do {
                 $queryGetData = '$top='+$top+'&$skip='+$skip
             
-                $urlGetTask = 'https://' + $myDomain.TrimEnd('/') + '/api/tasks?'+ $queryGetData 
+                $urlGetTask = 'https://' + $myDomain.TrimEnd('/') + '/api/tasks/wanderer?'+ $queryGetData  
                 $Params = @{
                     Uri     = $urlGetTask
                     Method  = 'GET'
@@ -97,6 +99,9 @@ $msgBoxInput =  [System.Windows.MessageBox]::Show("This action will delete all T
             }
         }
     }    
+    Write-Host "Total tasks have been deleted: $Succeed" -ForegroundColor Green
+    Write-Host "Total tasks have been failed to delte: $Failed" -ForegroundColor Red
+
   }
 
   'No' {

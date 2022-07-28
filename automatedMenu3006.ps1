@@ -10,10 +10,10 @@ function Show-Menu {
     Write-Host "Press 'T3' to delete all eTasks."
     Write-Host "Press 'T4' to delete all Wanderer eTasks.`n"
     Write-Host "================ BUG ================== `n" -ForegroundColor Yellow
-    Write-Host "Press 'T1' to create bugs based on Excel data."
-    Write-Host "Press 'T2' to update bugs based on created items."
-    Write-Host "Press 'T3' to delete all Bugs."
-    Write-Host "Press 'T4' to delete all Wanderer bugs.`n"
+    Write-Host "Press 'B1' to create bugs based on Excel data."
+    Write-Host "Press 'B2' to update bugs based on created items."
+    Write-Host "Press 'B3' to delete all Bugs."
+    Write-Host "Press 'B4' to delete all Wanderer bugs.`n"
     Write-Host "============ Settings - EVENTS =========== `n" -ForegroundColor Yellow
     Write-Host "Press 'E1' to create Activity - Events based on Excel data."
     Write-Host "Press 'E2' to delete all Activities - Events.`n"

@@ -427,6 +427,7 @@ if ($dataConfig) {
             # $myProjects = Get-exProjects -Domain $myDomain -TeamId $myTeam -ChannelId $myChannel -Cookie $thisCookie
             ForEach ($project in $myProjects) {
                 if ($data.projectName -eq $project.displayName) {
+                    $sourceBucket = $project.source  
                     $resultUpdateSheet.Cells.Item($countprojectName, 9) = $data.projectName
                     $countprojectName++
                     break
@@ -456,13 +457,21 @@ if ($dataConfig) {
                 $Result = Invoke-WebRequest @Params -WebSession $session
                 $dataPhase = $Result.Content | ConvertFrom-Json
                 # each items in dataPhase
-
+                $lengthPhase = $dataPhase.value.length
                 ForEach ($phase in $dataPhase.value) {
                     if ($phase.phaseName -eq $data.phase) {
                         $dataCreate.Add("phaseName", $data.phase)
                         $dataCreate.Add("phase", $phase._id)
+                        $resultUpdateSheet.Cells.Item($countPhase, 11) = $data.phase
+                        $countPhase++
                         break
                     } 
+                    $lengthPhase--
+                    if ($lengthPhase -eq 0) {
+                        $resultUpdateSheet.Cells.Item($countPhase, 11) = $data.phase
+                        $resultUpdateSheet.Cells.Item($countPhase, 11).Interior.ColorIndex = 3
+                        $countPhase++
+                    }
                 }
             }
             # if source in Get-exProjects not = 'Appvity.eTask'
@@ -483,10 +492,14 @@ if ($dataConfig) {
                         if ($project.source -eq "Microsoft.Vsts") {
                             $dataCreate.Add("phaseName", $data.phase)
                             $dataCreate.Add("phase", $phase.value)
+                            $resultUpdateSheet.Cells.Item($countPhase, 11) = $data.phase
+                            $countPhase++
                         }
                         else {
                             $dataCreate.Add("phaseName", $data.phase)
                             $dataCreate.Add("phase", [string]$phase.value)
+                            $resultUpdateSheet.Cells.Item($countPhase, 11) = $data.phase
+                            $countPhase++
 
                         }
                         $havePhase = $true
@@ -494,7 +507,10 @@ if ($dataConfig) {
                 }                              
                 if ($havePhase -eq $false -And $project.source -eq 'Microsoft.Planner') {
                     $flagValid = $true
-                    $failMes += 'Wrong field phase for source Planner' 
+                    $failMes += 'Wrong field phase for source Planner'
+                    $resultUpdateSheet.Cells.Item($countPhase, 11) = $data.phase
+                    $resultUpdateSheet.Cells.Item($countPhase, 11).Interior.ColorIndex = 3
+                    $countPhase++ 
 
                 }
             }
@@ -503,6 +519,9 @@ if ($dataConfig) {
         else {
             $dataCreate.Add("phaseName", "")
             $dataCreate.Add("phase", "")
+            $resultUpdateSheet.Cells.Item($countPhase, 11) = $data.phase
+            $resultUpdateSheet.Cells.Item($countPhase, 11).Interior.ColorIndex = 15
+            $countPhase++
             if ($project.source -eq 'Microsoft.Planner') {
                 $flagValid = $true
                 $failMes += 'Empty field phase for source Planner' 
@@ -673,10 +692,10 @@ if ($dataConfig) {
         $sh1_wb1 = $Workbook.sheets.item(7) # second sheet in destination workbook 
         $sheetToCopy = $workbook.sheets.item('Update') # source sheet to copy 
         $sheetToCopy.copy($sh1_wb1) # copy source sheet to destination workbook 
-        if ($WorkSheetCompared = $WorkBook.sheets.item("Update (2)")){
+        if ($WorkSheetCompared = $WorkBook.sheets.item("Update (2)")) {
             $WorkSheetCompared.Name = $updateCompared
         }
-        elseif ($WorkSheetCompared = $WorkBook.sheets.item($updateCompared)){
+        elseif ($WorkSheetCompared = $WorkBook.sheets.item($updateCompared)) {
             $WorkSheetCompared.Name = $updateCompared
         }
     }
