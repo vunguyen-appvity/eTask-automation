@@ -28,7 +28,7 @@ switch ($msgBoxInput) {
             $groupId = $dataExcel.groupId
             $teamId = $dataExcel.teamId
             $entityId = $dataExcel.entityId
-            # $myDomain = $dataExcel.domainName
+            $myDomain = $dataExcel.domainName
      
             if ($channelId -And $groupId -And $teamId -And $entityId) {
                 $Cookie = ""

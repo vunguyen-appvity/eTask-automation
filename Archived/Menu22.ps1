@@ -21,85 +21,30 @@ Function Get-Details {
         "Delete all wanderer Tasks" {
             Invoke-Expression "C:\Users\vunguyen\Documents\GitHub\eTask-automation\Task\delete_WanderTasks.ps1"
         }
-        "Create Bug" {        
-            Invoke-Expression "C:\Users\vunguyen\Documents\GitHub\eTask-automation\Task\create_Task.ps1"
-        }
-        "Update Bug" {
-            Invoke-Expression "C:\Users\vunguyen\Documents\GitHub\eTask-automation\Task\update_Task.ps1"
-        }
-        "Delete created Bugs" {
-            Invoke-Expression "C:\Users\vunguyen\Documents\GitHub\eTask-automation\Task\delete_createdTasks.ps1"
-        }
-        "Delete all Bugs" {
-            Invoke-Expression "C:\Users\vunguyen\Documents\GitHub\eTask-automation\Task\delete_allTasks.ps1"
-        }
-        "Delete all wanderer Bugs" {
-            Invoke-Expression "C:\Users\vunguyen\Documents\GitHub\eTask-automation\Task\delete_WanderTasks.ps1"
-        }
     }
 }
 Function Exit-Program {
     $form.close()
 }
 
-$Categories = @("Task", "Bug", "Event", "Field", "Source", "User")
+$Categories = @("Task", "Bug")
 
-$Task = @(
-    "Create Task", 
-    "Update Task", 
-    "Delete created Tasks", 
-    "Delete all Tasks", 
-    "Delete all wanderer Tasks")
-$Bug = @(
-    "Create Bug", 
-    "Update Bug", 
-    "Delete created Bugs", 
-    "Delete all Bugs", 
-    "Delete all wanderer Bugs")
-$Event = @(
-    "Create Activity", 
-    "Delete all Activities", 
-    "Create Email Notification", 
-    "Delete all Email Notifications", 
-    "Create Mobile Notification", 
-    "Delete all Mobile Notifications")
-$Field = @(
-    "Create Priority mapping", 
-    "Delete all priority mapping",
-    "Create Severity mapping", 
-    "Delete all Severity mapping", 
-    "Create Task Status mapping", 
-    "Delete all Task Status mapping", 
-    "Create Bug Status mapping", 
-    "Delete all Bug Status mapping")
-$Source = @(
-    "Create Source",
-    "Delete all Sources",
-    "Create Source syncJob",
-    "Delete all Source syncJob"
-)
-$User = @(
-    "Create User Mapping",
-    "Detele User Mapping"
-)
+$Task = @("Create Task", "Update Task", "Delete created Tasks", "Delete all Tasks", "Delete all wanderer Tasks")
+$Bug = @("Create Bug", "Update Bug", "Delete created Bugs", "Delete all Bugs", "Delete all wanderer Bugs")
+$CitiesCA = @("Toronto", "Vancouver")
 
 $Form = New-Object System.Windows.Forms.Form
-$Form.Size = New-Object System.Drawing.Size(280, 230)  
-$Form.StartPosition = 'CenterScreen'
+$Form.Size = New-Object System.Drawing.Size(282, 220)  
 $Form.Text = 'eTask Automation'
 
 $Combobox1 = New-Object System.Windows.Forms.Combobox
 $Combobox1.Location = New-Object System.Drawing.Size(10, 30)  
 $Combobox1.Size = New-Object System.Drawing.Size(240, 70)
-$Combobox1.Height = 200
-$Combobox1.Font = New-Object System.Drawing.Font("Tahoma",12,[System.Drawing.FontStyle]::Regular)
 $Combobox1.items.AddRange($Categories)
 
 $combobox2 = New-Object System.Windows.Forms.Combobox
 $combobox2.Location = New-Object System.Drawing.Size(10, 80)  
 $combobox2.Size = New-Object System.Drawing.Size(240, 70)
-$Combobox2.Height = 200
-$Combobox2.Font = New-Object System.Drawing.Font("Tahoma",12,[System.Drawing.FontStyle]::Regular)
 $Form.Controls.Add($combobox1)
 $Form.Controls.Add($combobox2)
 
@@ -125,17 +70,8 @@ $ComboBox1_SelectedIndexChanged = {
         "Bug" {
             $Bug | ForEach { $combobox2.Items.Add($_) }
         }
-        "Event" {
-            $Event | ForEach { $combobox2.Items.Add($_) }
-        }
-        "Field" {
-            $Field | ForEach { $combobox2.Items.Add($_) }
-        }
-        "Source" {
-            $Source | ForEach { $combobox2.Items.Add($_) }
-        }
-        "User" {
-            $User | ForEach { $combobox2.Items.Add($_) }
+        "Canada" {
+            $CitiesCA | ForEach { $combobox2.Items.Add($_) }
         }
     }
 }
