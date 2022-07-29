@@ -84,6 +84,7 @@ if ($dataConfig) {
 
     $dataExcel = Import-Excel -path "C:\eTaskAutomationTesting\ImportData.xlsx" -WorksheetName Source
     foreach ($data in $dataExcel) {
+        Write-Host "Creating source "$data.Name"..."
         $sourceCreate = @{}
         if ($data.source -eq 'Planner') {
             $data.source = "Microsoft.Planner"
@@ -147,6 +148,7 @@ if ($dataConfig) {
                 }  
             }
         }
+        
         $urlmySource = 'https://' + $myDomain.TrimEnd('/') + '/api/projects'
         $Params = @{
             Uri     = $urlmySource
@@ -160,14 +162,15 @@ if ($dataConfig) {
         try {
             $Result = Invoke-WebRequest @Params -WebSession $session
             $createSource = $Result.Content | ConvertFrom-Json
-            Write-Host "Source created successfully" -ForegroundColor Green
+            Write-Host " → Source created successfully" -ForegroundColor Green
             $Succeed++
         }
         catch {
-            Write-Error $_.Exception.Message
+            Write-Host " → Source failed to create" -ForegroundColor Red
             $Failed++
         }
     }
+    Write-Host "============================"
     Write-Host "Successful sources: $Succeed" -ForegroundColor Green
     Write-Host "Failed sources: $Failed" -ForegroundColor Red
 

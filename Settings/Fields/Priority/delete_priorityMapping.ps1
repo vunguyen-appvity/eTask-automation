@@ -24,7 +24,9 @@ switch ($msgBoxInput) {
         $priorityID = @()
         $eventDeletes = @()
         $sources = @()
-
+        $Succeed = 0
+        $Failed = 0
+        
         if ($dataConfig) {
             $myChannel = $dataConfig.channelId
             $myGroup = $dataConfig.groupId
@@ -90,13 +92,19 @@ switch ($msgBoxInput) {
                 }
                 try {
                     $Result = Invoke-WebRequest @Params -WebSession $session
-                    Write-Host "Removed all priorities mapping sucessfully" -ForegroundColor Green
+                    Write-Host "Removed priority mapping sucessfully" -ForegroundColor Green
+                    $Succeed++
                 }
                 catch {
                     Write-Host "Failed to remove priorities mapping" -ForegroundColor Red
+                    $Failed++
                 }
             }
         }
+        Write-Host "============================"
+        Write-Host "Total priorities have been removed mapping: $Succeed" -ForegroundColor Green
+        Write-Host "Total priorities have been failed to remove mapping: $Failed" -ForegroundColor Red
+
     }
     'No' {
 

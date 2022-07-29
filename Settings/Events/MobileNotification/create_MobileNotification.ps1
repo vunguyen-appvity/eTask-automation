@@ -120,9 +120,13 @@ if ($dataConfig) {
     $countToTaskAssignee = 2
     $countToTaskMentioned = 2
     $countPOST = 1
+    $Succeed = 0
+    $Failed = 0
 
     $dataExcel = Import-Excel -Path "C:\eTaskAutomationTesting\ImportData.xlsx" -WorksheetName MobileNotification
     foreach ($data in $dataExcel) {
+        Write-Host "Creating Mobile Notification "$data.Name"..."
+
         $flagValid = $false
         $dataActivity = @{
         }
@@ -319,8 +323,12 @@ if ($dataConfig) {
                 $resultSheet.Cells.Item($countActivityResult, 2) = $createTask._id
                 $countActivityResult++
             }
+            Write-Host " → Mobile notification created successfully" -ForegroundColor Green
+            $Succeed++ 
         }
-        else{
+        else {
+            Write-Host " → Mobile notification failed to create" -ForegroundColor Red
+            $Failed++
             $countActivityResult++
         }
 
@@ -342,6 +350,10 @@ if ($dataConfig) {
         # }   
         
     }
+    Write-Host "============================"
+    Write-Host "Successfully created mobile notifications: $Succeed" -ForegroundColor Green
+    Write-Host "Failed to create mobile notifications: $Failed" -ForegroundColor Red
+
     $WorkBook.save()
 }
 

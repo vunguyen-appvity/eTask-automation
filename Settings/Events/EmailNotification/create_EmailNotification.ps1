@@ -7,7 +7,7 @@ If (!(Get-module Appvity.eTask.PowerShell)) {
     Import-Module -name 'Appvity.eTask.PowerShell'
 }
 
-$body = invoke-expression -Command .\emailBody.ps1
+$body = invoke-expression "C:\eTaskAutomationTesting\emailBody.ps1"
 # $myDomain = "teams-stag.appvity.com"
 $idTask = @()
 $intertalTask = @()
@@ -157,9 +157,13 @@ if ($dataConfig) {
     $countBccPeople = 2
     $countToTaskMentioned = 2
     $countPOST = 1
+    $Succeed = 0
+    $Failed = 0
 
     $dataExcel = Import-Excel -Path "C:\eTaskAutomationTesting\ImportData.xlsx" -WorksheetName EmailNotification
     foreach ($data in $dataExcel) {
+        Write-Host "Creating Email Notification "$data.Name"..."
+
         $flagValid = $false
         $dataActivity = @{
         }
@@ -189,7 +193,7 @@ if ($dataConfig) {
                 $resultSheet.Cells.Item($countType, 4) = $data.Type
                 $countType++
             }
-            else{
+            else {
                 $resultSheet.Cells.Item($countType, 4) = $data.Type
                 $resultSheet.Cells.Item($countType, 4).Interior.ColorIndex = 3
                 $countType++
@@ -486,13 +490,20 @@ if ($dataConfig) {
             if ($createTask -ne "") {
                 $resultSheet.Cells.Item($countActivityResult, 1) = $createTask.internalId
                 $resultSheet.Cells.Item($countActivityResult, 2) = $createTask._id
-                $countActivityResult++
+                $countActivityResult++   
             }
+            Write-Host " → Email notification created successfully" -ForegroundColor Green
+            $Succeed++ 
         }
-        else{
+        else {
+            Write-Host " → Email notification failed to create" -ForegroundColor Red
+            $Failed++
             $countActivityResult++
         }
     }
+    Write-Host "============================"
+    Write-Host "Successfully created email notifications: $Succeed" -ForegroundColor Green
+    Write-Host "Failed to create email notifications: $Failed" -ForegroundColor Red
     $WorkBook.save()
 }
 

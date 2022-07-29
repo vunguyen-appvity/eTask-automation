@@ -29,6 +29,8 @@ switch ($msgBoxInput) {
         $userdeleteEmail = @()
         $userdeleteDisplayname = @()
         $deleteMappingUserID = @()
+        $Succeed = 0
+        $Failed = 0
         $queryGetEvent = '?t=1656916477108&$count=true&$filter=(entityType%20eq%20%27task%27%20or%20entityType%20eq%20%27bug%27)'
 
         if ($dataConfig) {
@@ -125,14 +127,18 @@ switch ($msgBoxInput) {
                 try {
                     $Result = Invoke-WebRequest @Params -WebSession $session
                     Write-Host "Removed user mapping sucessfully"  -ForegroundColor Green
-                        
+                    $Succeed++
                 }
                 catch {
                     Write-Host "Failed to remove user mapping" -ForegroundColor Red
-                        
+                    $Failed++
                 }
             }
         }
+        Write-Host "============================"
+        Write-Host "Total user have been removed mapping: $Succeed" -ForegroundColor Green
+        Write-Host "Total email notifications have been failed to remove mapping: $Failed" -ForegroundColor Red
+
     }
     'No' {
 

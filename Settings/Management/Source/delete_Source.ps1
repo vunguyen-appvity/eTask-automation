@@ -78,6 +78,7 @@ switch ($msgBoxInput) {
                     }
                 }
             }
+            Write-Host "============================"
             Write-Host "Total sources have been deleted: $Succeed" -ForegroundColor Green
             Write-Host "Total sources have been failed to delete: $Failed" -ForegroundColor Red
         

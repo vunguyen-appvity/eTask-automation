@@ -136,6 +136,8 @@ if ($dataConfig) {
     $countJira = 2
     $countVSTS = 2
     $countPlanner = 2
+    $Succeed = 0
+    $Failed = 0
     
     $pathFile = "C:\eTaskAutomationTesting\ImportData.xlsx"
     $Excel = New-Object -ComObject Excel.Application
@@ -202,20 +204,21 @@ if ($dataConfig) {
     $countJira = 2
     $countPlanner = 2
     $flag = $true
-    while($flag) {
+    while ($flag) {
         $i = 0 
-        if($resultSheet.Cells.Item($countJira, 2).Text -eq "") {
+        if ($resultSheet.Cells.Item($countJira, 2).Text -eq "") {
             
             $countJira++
             break
         }
-        while($resultSheet.Cells.Item($countJira, 2).Text -eq $resultSheet.Cells.Item($countJira+1, 2).Text) {
-            if($i -le 4) {
+        while ($resultSheet.Cells.Item($countJira, 2).Text -eq $resultSheet.Cells.Item($countJira + 1, 2).Text) {
+            if ($i -le 4) {
                 $resultSheet.Cells.Item($countPlanner, 3) = $myPriority.value[$i].name
                 $countJira++
                 $i++
                 $countPlanner++
-            } else {
+            }
+            else {
                 $countPlanner++
                 $resultSheet.Cells.Item($countPlanner, 3) = ""
                 $countJira++
@@ -237,6 +240,7 @@ if ($dataConfig) {
     $dataMapping = @()
     
     Foreach ($data in $dataExcel) {
+        Write-Host "Mapping" $data.sourceMapping "from" $data.source "to" $data.eSourceMapping "in eTask"
         $dataCreate = @{}
 
         if ($data.source -eq "VSTS") {
@@ -311,16 +315,28 @@ if ($dataConfig) {
                 }
             }
         }
-        
-        $urlmappingPriority = 'https://' + $myDomain.TrimEnd('/') + '/odata/_fieldMappings'
-        $Params = @{
-            Uri     = $urlmappingPriority
-            Method  = 'POST'
-            Headers = $hd
-            Body    = $dataCreate | ConvertTo-Json
+        try {
+            $urlmappingPriority = 'https://' + $myDomain.TrimEnd('/') + '/odata/_fieldMappings'
+            $Params = @{
+                Uri     = $urlmappingPriority
+                Method  = 'POST'
+                Headers = $hd
+                Body    = $dataCreate | ConvertTo-Json
+            }
+            $Result = Invoke-WebRequest @Params -WebSession $session
+            $Content = $Result.Content | ConvertFrom-Json
+
+            Write-Host " → Priority mapped successfully" -ForegroundColor Green
+            $Succeed++
+
         }
-        $Result = Invoke-WebRequest @Params -WebSession $session
-        $Content = $Result.Content | ConvertFrom-Json
-        $Content
+        catch {
+            Write-Host " → Priority failed to map" -ForegroundColor Green
+            $Failed++
+        }
     }
+    Write-Host "============================"
+    Write-Host "Successfully mapped priority: $Succeed" -ForegroundColor Green
+    Write-Host "Failed to map priority: $Failed" -ForegroundColor Red
+
 }

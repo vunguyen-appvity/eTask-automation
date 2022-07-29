@@ -86,8 +86,9 @@ switch ($msgBoxInput) {
            
             }
         } 
+        Write-Host "============================"
         Write-Host "Total bugs have been deleted: $Succeed" -ForegroundColor Green
-        Write-Host "Total bugs have been failed to delte: $Failed" -ForegroundColor Red
+        Write-Host "Total bugs have been failed to delete: $Failed" -ForegroundColor Red
     }
 
     'No' {

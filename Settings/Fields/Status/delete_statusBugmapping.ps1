@@ -26,6 +26,8 @@ switch ($msgBoxInput) {
         $sources = @()
         $bugStatus = @()
         $taskStatus = @()
+        $Succeed = 0
+        $Failed = 0
 
         if ($dataConfig) {
             $myChannel = $dataConfig.channelId
@@ -100,13 +102,19 @@ switch ($msgBoxInput) {
                 }
                 try {
                     $Result = Invoke-WebRequest @Params -WebSession $session
-                    Write-Host "Removed all bug statuses mapping sucessfully" -ForegroundColor Green
+                    Write-Host "Removed bug status mapping sucessfully" -ForegroundColor Green
+                    $Succeed++
                 }
                 catch {
-                    Write-Host "Failed to remove bug statuses mapping" -ForegroundColor Red
+                    Write-Host "Failed to remove bug status mapping" -ForegroundColor Red
+                    $Failed++
                 }
             }
         }
+        Write-Host "============================"
+        Write-Host "Total bug statuses have been removed mapping: $Succeed" -ForegroundColor Green
+        Write-Host "Total bug statuses have been failed to remove mapping: $Failed" -ForegroundColor Red
+
     }
     'No' {
 

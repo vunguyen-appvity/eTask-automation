@@ -282,6 +282,7 @@ if ($dataConfig) {
     
     $test = 1
     foreach ($data in $dataExcel) {
+        Write-Host "Creating bug "$data.Name"..."
         $flagValid = $false
         $failMes = @()
         $compare = $true
@@ -757,8 +758,8 @@ if ($dataConfig) {
             }
             $Result = Invoke-WebRequest @Params -WebSession $session
             $Content = $Result.Content | ConvertFrom-Json
-            $Content
 
+            Write-Host " → Task created successfully" -ForegroundColor Green
             $taskSucces++
     
             $createTask = $Content
@@ -967,7 +968,7 @@ if ($dataConfig) {
         catch { 
             $resultSheet.Cells.Item($test, 1) = ""
             $resultSheet.Cells.Item($test, 2) = ""
-            Write-Error $_.Exception.Message
+            Write-Host " → Task failed to create " -ForegroundColor Red
             $taskError++
         }
         
@@ -1011,8 +1012,9 @@ if ($dataConfig) {
     $createdResultsheet.Cells.Item(5, 3) = $taskError
     $createdResultsheet.Cells.Item(5, 3).Interior.ColorIndex = 22
 
-    Write-Host "Successful bugs: $taskSucces" -ForegroundColor Green
-    Write-Host "Failed bugs: $taskError" -ForegroundColor Red
+    Write-Host "============================"
+    Write-Host "Successfully created bugs: $taskSucces" -ForegroundColor Green
+    Write-Host "Failed to create bugs: $taskError" -ForegroundColor Red
 
     # $lastsheet = $workbook.Worksheets.Item(5)
     # $createSheetUpdate = $Workbook.worksheets.add([System.Reflection.Missing]::Value, $lastsheet)

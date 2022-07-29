@@ -241,7 +241,7 @@ if ($dataConfig) {
         # }
     }
     foreach ($data in $data2) {
-        
+        Write-Host "Updating task "$data.Name"..."
         $urlGetTask = 'https://' + $myDomain.TrimEnd('/') + '/api/tasks/' + $data.ID + '/details'
         $Params = @{
             Uri     = $urlGetTask
@@ -658,14 +658,14 @@ if ($dataConfig) {
             $resultUpdateSheet.Cells.Item($countinternalIDPass, 1).Interior.ColorIndex = 37
             $countinternalIDPass++
 
+            Write-Host " → Task updated successfully" -ForegroundColor Green
             $updateSuccess++
             
         }
         catch {
             $resultUpdateSheet.Cells.Item($countinternalIDPass, 1).Interior.ColorIndex = 22
             $countinternalIDPass++
-            Write-Error $_.Exception.Message
-
+            Write-Host " → Task failed to update" -ForegroundColor Red
             $updateError++
         }
     }
@@ -683,8 +683,10 @@ if ($dataConfig) {
     $createdResultsheet.Cells.Item(5, 7) = $updateError
     $createdResultsheet.Cells.Item(5, 7).Interior.ColorIndex = 22
 
-    Write-Host "Successful tasks: $updateSuccess" -ForegroundColor Green
-    Write-Host "Failed tasks: $updateError" -ForegroundColor Red
+    Write-Host "============================"
+    Write-Host "Successfully updated tasks: $updateSuccess" -ForegroundColor Green
+    Write-Host "Failed to update tasks: $updateError" -ForegroundColor Red
+
     try {
         $updatecompareSheet = $updateCompared
         $WorkSheet3 = $WorkBook.sheets.item($updatecompareSheet)

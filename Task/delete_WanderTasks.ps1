@@ -99,8 +99,9 @@ $msgBoxInput =  [System.Windows.MessageBox]::Show("This action will delete all T
             }
         }
     }    
+    Write-Host "============================" 
     Write-Host "Total tasks have been deleted: $Succeed" -ForegroundColor Green
-    Write-Host "Total tasks have been failed to delte: $Failed" -ForegroundColor Red
+    Write-Host "Total tasks have been failed to delete: $Failed" -ForegroundColor Red
 
   }
 

@@ -10,6 +10,7 @@ If (!(Get-module Appvity.eTask.PowerShell)) {
 $idTask = @()
 $intertalTask = @()
 
+
 $dataConfig = Import-Excel -PATH "C:\eTaskAutomationTesting\ImportData.xlsx" -WorksheetName Config 
 if ($dataConfig) {
     $myChannel = $dataConfig.channelId
@@ -121,9 +122,13 @@ if ($dataConfig) {
     $countToTaskAssignee = 2
     $countToTaskMentioned = 2
     $countPOST = 1
+    $Succeed = 0
+    $Failed = 0
 
     $dataExcel = Import-Excel -Path "C:\eTaskAutomationTesting\ImportData.xlsx" -WorksheetName Activity
     foreach ($data in $dataExcel) {
+        Write-Host "Creating Activity "$data.Name"..."
+
         $flagValid = $false
         $dataActivity = @{
         }
@@ -319,7 +324,6 @@ if ($dataConfig) {
         # $Content = $Result.Content | ConvertFrom-Json
         # $Content
         # $Content
-
         if ($flagValid -eq $false) {
             $Result = Invoke-WebRequest @Params -WebSession $session
             $createTask = $Result.Content | ConvertFrom-Json
@@ -330,8 +334,12 @@ if ($dataConfig) {
                 $resultSheet.Cells.Item($countActivityResult, 2) = $createTask._id
                 $countActivityResult++
             }
+            Write-Host " → Activity created successfully" -ForegroundColor Green
+            $Succeed++
         }
-        else{
+        else {
+            Write-Host " → Activity failed to create" -ForegroundColor Red
+            $Failed++
             $countActivityResult++
         }
         ######################
@@ -352,6 +360,9 @@ if ($dataConfig) {
         # }   
         
     }
+    Write-Host "============================"
+    Write-Host "Successfully created activities: $Succeed" -ForegroundColor Green
+    Write-Host "Failed to create activities: $Failed" -ForegroundColor Red
     $WorkBook.save()
 }
 

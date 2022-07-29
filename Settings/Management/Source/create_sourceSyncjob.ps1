@@ -64,10 +64,25 @@ if ($dataConfig) {
             $projectID += $source.projectId
         }
     }
-    
+    $UrlProject = 'https://' + $myDomain.TrimEnd('/') + '/api/projects'
+        
+    $Params = @{
+        Uri     = $UrlProject
+        Method  = 'GET'
+        Headers = $hd
+    }
+        
+    $Result = Invoke-WebRequest @Params -WebSession $session
+    $dataProjects = $Result.Content | ConvertFrom-Json
+    $myProjects = $dataProjects.value
+
+    $Succeed = 0
+    $Failed = 0
+
     $dataExcel = Import-Excel -Path "C:\eTaskAutomationTesting\ImportData.xlsx" -WorksheetName syncJob
 
     foreach ($data in $dataExcel) {
+        Write-Host "Creating sync job" $data.syncName "in" $data.source "..."
         $syncCreate = @{}
 
         if ($data.source -eq "VSTS") {
@@ -83,73 +98,94 @@ if ($dataConfig) {
 
         $syncCreate.Add("filter", @{priority = @(); severity = @(); status = @(); story = @(); sprint = @{data = @(); type = "all" } })
 
-        if ($data.source -eq "Microsoft.Vsts") {
-            Foreach ($sourceItem in $mySource.value) {
-                if ($sourceItem.source -eq $data.source) {
-                    $syncCreate.Add("sourceId", $sourceItem.sourceId)
-                    $syncCreate.Add("projectId", $sourceItem.id)
-                    $syncCreate.Add("source", "Microsoft.Vsts")
-                    break
-                }
-            }
-        }
-        elseif ($data.source -eq "Microsoft.Planner") {
-            Foreach ($sourceItem in $mySource.value) {
-                if ($sourceItem.source -eq $data.source) {
-                    $syncCreate.Add("sourceId", $sourceItem.sourceId)
-                    $syncCreate.Add("projectId", $sourceItem.id)
-                    $syncCreate.Add("source", "Microsoft.Planner")
-                    break
-                }
-            }
-        }
-        elseif ($data.source -eq "Jira") {
-            Foreach ($sourceItem in $mySource.value) {
-                if ($sourceItem.source -eq $data.source) {
-                    $syncCreate.Add("sourceId", $sourceItem.sourceId)
-                    $syncCreate.Add("projectId", $sourceItem.id)
-                    $syncCreate.Add("source", "Jira")
+        # if ($data.source -eq "Microsoft.Vsts") {
+        #     Foreach ($sourceItem in $mySource.value) {
+        #         if ($sourceItem.source -eq $data.source) {
+        #             $syncCreate.Add("sourceId", $sourceItem.sourceId)
+        #             $syncCreate.Add("projectId", $sourceItem.id)
+        #             $syncCreate.Add("source", "Microsoft.Vsts")
+        #             break
+        #         }
+        #     }
+        # }
+        # elseif ($data.source -eq "Microsoft.Planner") {
+        #     Foreach ($sourceItem in $mySource.value) {
+        #         if ($sourceItem.source -eq $data.source) {
+        #             $syncCreate.Add("sourceId", $sourceItem.sourceId)
+        #             $syncCreate.Add("projectId", $sourceItem.id)
+        #             $syncCreate.Add("source", "Microsoft.Planner")
+        #             break
+        #         }
+        #     }
+        # }
+        # elseif ($data.source -eq "Jira") {
+        #     Foreach ($sourceItem in $mySource.value) {
+        #         if ($sourceItem.source -eq $data.source) {
+        #             $syncCreate.Add("sourceId", $sourceItem.sourceId)
+        #             $syncCreate.Add("projectId", $sourceItem.id)
+        #             $syncCreate.Add("source", "Jira")
+        #             break
+        #         }
+        #     }
+        # }
+        if ($data.source) {
+            ForEach ($project in $myProjects) {
+                if ($data.source -eq $project.displayName) { 
+                    $syncCreate.Add("source", $project.source)
+                    $syncCreate.Add("projectId", $project._id)
+                    $syncCreate.Add("sourceId", $project.sourceId)
                     break
                 }
             }
         }
         
-        if($data.schedule -eq 'Daily'){
-            $syncCreate.Add("schedule", @{type = "d"; d = "00:00"})
+        if ($data.schedule -eq 'Daily') {
+            $syncCreate.Add("schedule", @{type = "d"; d = "00:00" })
             # if($data.dailyTime){
             #     $syncCreate.schedule.Add("d", $data.dailyTime)
             # }
         }
-        else{
-            $syncCreate.Add("schedule", @{d = "00:00"})
-            if($data.schedule -eq '15 mins'){
-                $syncCreate.schedule.Add("type","15min")
+        else {
+            $syncCreate.Add("schedule", @{d = "00:00" })
+            if ($data.schedule -eq '15 mins') {
+                $syncCreate.schedule.Add("type", "15min")
             }
-            elseif($data.schedule -eq '30 mins'){
+            elseif ($data.schedule -eq '30 mins') {
                 $syncCreate.schedule.Add("type", "30min")
             }
-            elseif($data.schedule -eq '1 hour'){
+            elseif ($data.schedule -eq '1 hour') {
                 $syncCreate.schedule.Add("type", "60min")
             }
-            elseif($data.schedule -eq '2 hours'){
+            elseif ($data.schedule -eq '2 hours') {
                 $syncCreate.schedule.Add("type", "120min")
             }
-            elseif($data.schedule -eq 'None'){
-                $syncCreate.schedule.Add("type" ,"none")
+            elseif ($data.schedule -eq 'None') {
+                $syncCreate.schedule.Add("type" , "none")
             }
         }
         # $syncCreate.Add("schedule", @{d = "00:00"; type = "60min" })
+        try {
+            $urlSyncJob = 'https://' + $myDomain.TrimEnd('/') + '/api/syncs'
+            $Params = @{
+                Uri     = $urlSyncJob
+                Method  = 'POST'
+                Headers = $hd
+                Body    = $syncCreate | ConvertTo-Json  -depth 5
+            }
+            $Result = Invoke-WebRequest @Params -WebSession $session
+            $Content = $Result.Content | ConvertFrom-Json
 
-        $urlSyncJob = 'https://' + $myDomain.TrimEnd('/') + '/api/syncs'
-        $Params = @{
-            Uri     = $urlSyncJob
-            Method  = 'POST'
-            Headers = $hd
-            Body    = $syncCreate | ConvertTo-Json  -depth 5
+            Write-Host " → Sync job created successfully" -ForegroundColor Green
+            $Succeed++
         }
-        $Result = Invoke-WebRequest @Params -WebSession $session
-        $Content = $Result.Content | ConvertFrom-Json
-        $Content
+        catch {
+            Write-Host " → Sync job failed to create " -ForegroundColor Red
+            $Failed++
+
+        }
     }
-    
+    Write-Host "============================"
+    Write-Host "Successfully created sync job: $Succeed" -ForegroundColor Green
+    Write-Host "Failed to create sync job: $Failed" -ForegroundColor Red
+
 }

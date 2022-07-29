@@ -26,6 +26,8 @@ switch ($msgBoxInput) {
         $top = 100
         $lengthStatus = @()
         $eventDeletes = @()
+        $Succeed = 0
+        $Failed = 0
         $queryGetEvent = '?t=1656916477108&$count=true&$filter=(entityType%20eq%20%27task%27%20or%20entityType%20eq%20%27bug%27)'
 
         if ($dataConfig) {
@@ -86,17 +88,18 @@ switch ($msgBoxInput) {
                     try {
                         $Result = Invoke-WebRequest @Params -WebSession $session
                         Write-Host "Deleted" $event.eventName "|" $event.internalId -ForegroundColor Green
-                        $success++
+                        $Succeed++
                     }
                     catch {
                         Write-Host "Delete failed"  $event.eventName "|" $event.internalId -ForegroundColor Red
-                        $failed++
+                        $Failed++
                     }
                 }
             }
         }
-        Write-Host "Total Email Notifications in $channelName have deleted: $success" -ForegroundColor Green
-        Write-Host "Total Email Notifications in $channelName failed to delete: $failed" -ForegroundColor Red
+        Write-Host "============================"
+        Write-Host "Total email notifications have been deleted: $Succeed" -ForegroundColor Green
+        Write-Host "Total email notifications have been failed to delete: $Failed" -ForegroundColor Red
     }
     'No' {
 

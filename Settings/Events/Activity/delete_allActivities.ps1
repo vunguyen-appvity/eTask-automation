@@ -24,6 +24,8 @@ switch ($msgBoxInput) {
         $top = 100
         $lengthStatus = @()
         $eventDeletes = @()
+        $Succeed = 0
+        $Failed = 0
         $queryGetEvent = '?t=1656916477108&$count=true&$filter=(entityType%20eq%20%27task%27%20or%20entityType%20eq%20%27bug%27)'
 
         if ($dataConfig) {
@@ -84,13 +86,19 @@ switch ($msgBoxInput) {
                     try {
                         $Result = Invoke-WebRequest @Params -WebSession $session
                         Write-Host "Deleted" $event.eventName "|" $event.internalId -ForegroundColor Green
+                        $Succeed++
                     }
                     catch {
                         Write-Host "Delete failed"  $event.eventName "|" $event.internalId -ForegroundColor Red
+                        $Failed++
                     }
                 }
             }
         }
+        Write-Host "============================"
+        Write-Host "Total activities have been deleted: $Succeed" -ForegroundColor Green
+        Write-Host "Total activities have been failed to delete: $Failed" -ForegroundColor Red
+    
     }
     'No' {
 

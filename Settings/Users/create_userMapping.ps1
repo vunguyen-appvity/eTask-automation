@@ -40,9 +40,13 @@ if ($dataConfig) {
     $skip = 0
     $skipCount = 20
     $top = 0
+    $Succeed = 0
+    $Failed = 0
     
     $dataExcel = Import-Excel -path "C:\eTaskAutomationTesting\ImportData.xlsx" -WorksheetName userMapping
+
     foreach ($data in $dataExcel) {
+        Write-Host "Mapping" $data.sourceDisplayname "from" $data.source "to" $data.eTaskDisplayName "in eTask"
         $userCreate = @{}
         $nameSearch = $data.sourceDisplayname.subString(0, [System.Math]::Min(2, $data.sourceDisplayname.Length))
         
@@ -108,17 +112,30 @@ if ($dataConfig) {
                 }
             }
         }
-        $urlmyTask = 'https://' + $myDomain.TrimEnd('/') + '/odata/_userMappings'
-        $Params = @{
-            Uri     = $urlmyTask
-            Method  = 'POST'
-            Headers = $hd
-            Body    = $userCreate | ConvertTo-Json
+        try {
+            $urlmyTask = 'https://' + $myDomain.TrimEnd('/') + '/odata/_userMappings'
+            $Params = @{
+                Uri     = $urlmyTask
+                Method  = 'POST'
+                Headers = $hd
+                Body    = $userCreate | ConvertTo-Json
+            }
+            $Result = Invoke-WebRequest @Params -WebSession $session
+            $Content = $Result.Content | ConvertFrom-Json
+
+            Write-Host " → Mapping user successfully" -ForegroundColor Green
+            $Succeed++
+
         }
-        $Result = Invoke-WebRequest @Params -WebSession $session
-        $Content = $Result.Content | ConvertFrom-Json
-        $Content
+        catch {
+            Write-Host " → Mapping user failed" -ForegroundColor Green
+            $Failed++
+        }
     }
+    Write-Host "============================"
+    Write-Host "Successfully mapped user: $Succeed" -ForegroundColor Green
+    Write-Host "Failed to map user: $Failed" -ForegroundColor Red
+
 }
 
 
